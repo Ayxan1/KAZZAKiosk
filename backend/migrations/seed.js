@@ -1,3 +1,4 @@
+require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const {
     User,
@@ -8,63 +9,57 @@ async function seedDatabase() {
     try {
         console.log('🌱 Seeding database...');
 
-        // Find or create default kiosk
-        let kiosk = await Kiosk.findOne({
-            where: {
-                kiosk_name: 'Kiosk A'
-            }
+        // DELETE ALL EXISTING DATA
+        console.log('🗑️  Deleting all existing users...');
+        await User.destroy({
+            where: {},
+            truncate: false
         });
-        if (!kiosk) {
-            kiosk = await Kiosk.create({
-                kiosk_name: 'Kiosk A'
-            });
-            console.log('✅ Default kiosk created:', kiosk.kiosk_name);
-        } else {
-            console.log('ℹ️  Kiosk already exists:', kiosk.kiosk_name);
-        }
 
-        // Check if admin exists
-        let admin = await User.findOne({
-            where: {
-                username: 'admin'
-            }
+        console.log('🗑️  Deleting all existing kiosks...');
+        await Kiosk.destroy({
+            where: {},
+            truncate: false
         });
-        if (!admin) {
-            const adminPassword = await bcrypt.hash('admin123', 10);
-            admin = await User.create({
-                username: 'admin',
-                password: adminPassword,
-                full_name: 'Admin',
-                role: 'admin',
-                is_active: true
-            });
-            console.log('✅ Admin user created - Username: admin, Password: admin123');
-        } else {
-            console.log('ℹ️  Admin user already exists');
-        }
 
-        // Check if seller exists
-        let seller = await User.findOne({
-            where: {
-                username: 'seller'
-            }
+        console.log('✅ Old data cleaned!');
+
+        // CREATE NEW KIOSK
+        const kiosk = await Kiosk.create({
+            kiosk_name: 'Kiosk A',
+            is_active: true
         });
-        if (!seller) {
-            const sellerPassword = await bcrypt.hash('seller123', 10);
-            seller = await User.create({
-                username: 'seller',
-                password: sellerPassword,
-                full_name: 'Satıcı',
-                role: 'seller',
-                assigned_kiosk_id: kiosk.kiosk_id,
-                is_active: true
-            });
-            console.log('✅ Seller user created - Username: seller, Password: seller123');
-        } else {
-            console.log('ℹ️  Seller user already exists');
-        }
+        console.log('✅ Kiosk created:', kiosk.kiosk_name);
+
+        // CREATE ADMIN USER
+        const adminPassword = await bcrypt.hash('admin123', 10);
+        const admin = await User.create({
+            username: 'admin',
+            password: adminPassword,
+            full_name: 'Admin User',
+            role: 'admin',
+            is_active: true
+        });
+        console.log('✅ Admin created - Username: admin | Password: admin123');
+
+        // CREATE SELLER USER
+        const sellerPassword = await bcrypt.hash('seller123', 10);
+        const seller = await User.create({
+            username: 'seller',
+            password: sellerPassword,
+            full_name: 'Seller User',
+            role: 'seller',
+            assigned_kiosk_id: kiosk.kiosk_id,
+            is_active: true
+        });
+        console.log('✅ Seller created - Username: seller | Password: seller123 | Kiosk:', kiosk.kiosk_name);
 
         console.log('🎉 Database seeded successfully!');
+        console.log('');
+        console.log('📝 Login Credentials:');
+        console.log('   Admin  → admin / admin123');
+        console.log('   Seller → seller / seller123 (Kiosk A)');
+
         process.exit(0);
     } catch (error) {
         console.error('❌ Seeding failed:', error);
