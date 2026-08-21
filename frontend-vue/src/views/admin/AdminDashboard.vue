@@ -359,9 +359,7 @@
       >
         <h2 class="text-xl font-semibold mb-4">Fəaliyyət Jurnalı</h2>
 
-        <div
-          class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4"
-        >
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
           <div>
             <label class="block text-xs text-gray-500 mb-1">Tarixdən</label>
             <input
