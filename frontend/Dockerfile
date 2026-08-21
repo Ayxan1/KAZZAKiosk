@@ -2,13 +2,11 @@
 # Build date: 2026-08-21
 FROM debian:latest AS build-env
 
-# Install Flutter dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    git \
-    wget \
-    unzip \
-    && apt-get clean
+# Install Flutter dependencies (minimal set for web build)
+RUN apt-get update && \
+    apt-get install -y curl git wget unzip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Clone Flutter repository
 RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
