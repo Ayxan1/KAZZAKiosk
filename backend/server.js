@@ -26,6 +26,7 @@ app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/sales', require('./routes/salesRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/seed', require('./routes/seed')); // Seed endpoint
 
 // Health check
 app.get('/health', (req, res) => {
