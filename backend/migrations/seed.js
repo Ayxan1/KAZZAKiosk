@@ -9,7 +9,11 @@ async function seedDatabase() {
         console.log('🌱 Seeding database...');
 
         // Find or create default kiosk
-        let kiosk = await Kiosk.findOne({ where: { kiosk_name: 'Kiosk A' } });
+        let kiosk = await Kiosk.findOne({
+            where: {
+                kiosk_name: 'Kiosk A'
+            }
+        });
         if (!kiosk) {
             kiosk = await Kiosk.create({
                 kiosk_name: 'Kiosk A'
@@ -20,7 +24,11 @@ async function seedDatabase() {
         }
 
         // Check if admin exists
-        let admin = await User.findOne({ where: { username: 'admin' } });
+        let admin = await User.findOne({
+            where: {
+                username: 'admin'
+            }
+        });
         if (!admin) {
             const adminPassword = await bcrypt.hash('admin123', 10);
             admin = await User.create({
@@ -36,7 +44,11 @@ async function seedDatabase() {
         }
 
         // Check if seller exists
-        let seller = await User.findOne({ where: { username: 'seller' } });
+        let seller = await User.findOne({
+            where: {
+                username: 'seller'
+            }
+        });
         if (!seller) {
             const sellerPassword = await bcrypt.hash('seller123', 10);
             seller = await User.create({
