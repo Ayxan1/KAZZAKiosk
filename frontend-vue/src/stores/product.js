@@ -20,8 +20,19 @@ function flattenKioskProduct(kp) {
     }
 }
 
+// Same as flattenKioskProduct but also carries the kiosk name/id (used by the
+// admin cross-kiosk inventory table).
+function flattenAllKioskProduct(kp) {
+    return {
+        ...flattenKioskProduct(kp),
+        kiosk_id: kp.kiosk_id,
+        kiosk_name: kp.kiosk?.kiosk_name
+    }
+}
+
 export const useProductStore = defineStore('product', () => {
     const products = ref([])
+    const allProducts = ref([])
     const loading = ref(false)
     const error = ref(null)
 
@@ -35,6 +46,23 @@ export const useProductStore = defineStore('product', () => {
                 }
             })
             products.value = (data.products || []).map(flattenKioskProduct)
+        } catch (err) {
+            error.value = err.message || 'Məhsullar yüklənə bilmədi'
+            console.error('Məhsullar yüklənə bilmədi:', err)
+        } finally {
+            loading.value = false
+        }
+    }
+
+    // Admin only - products across all kiosks, optionally filtered
+    async function fetchAllProducts(params = {}) {
+        loading.value = true
+        error.value = null
+        try {
+            const data = await apiClient.get('/products/all', {
+                params
+            })
+            allProducts.value = (data.products || []).map(flattenAllKioskProduct)
         } catch (err) {
             error.value = err.message || 'Məhsullar yüklənə bilmədi'
             console.error('Məhsullar yüklənə bilmədi:', err)
@@ -97,9 +125,11 @@ export const useProductStore = defineStore('product', () => {
 
     return {
         products,
+        allProducts,
         loading,
         error,
         fetchProducts,
+        fetchAllProducts,
         addProduct,
         updateProduct,
         deleteProduct

@@ -38,11 +38,25 @@ export const useUserStore = defineStore('user', () => {
         }
     }
 
+    async function updateUser(userId, updates) {
+        error.value = null
+        try {
+            await apiClient.put(`/users/${userId}`, updates)
+            await fetchUsers()
+            return true
+        } catch (err) {
+            error.value = err.message || 'İstifadəçi yenilənə bilmədi'
+            console.error('İstifadəçi yenilənə bilmədi:', err)
+            return false
+        }
+    }
+
     return {
         users,
         loading,
         error,
         fetchUsers,
-        createUser
+        createUser,
+        updateUser
     }
 })

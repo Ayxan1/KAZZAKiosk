@@ -46,6 +46,23 @@
         <!-- Products List -->
         <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
           <input
+            ref="barcodeInputEl"
+            v-model="barcodeInput"
+            @keyup.enter="handleBarcodeScan"
+            type="text"
+            placeholder="Barkodu skan edin (avtomatik səbətə əlavə olunur)..."
+            class="w-full px-4 py-2 border-2 border-indigo-400 rounded-lg mb-2 focus:ring-2 focus:ring-indigo-500"
+          />
+          <p
+            v-if="barcodeMessage"
+            :class="[
+              'text-sm mb-2',
+              barcodeMessageOk ? 'text-green-600' : 'text-red-600',
+            ]"
+          >
+            {{ barcodeMessage }}
+          </p>
+          <input
             v-model="searchQuery"
             type="text"
             placeholder="Məhsul axtar..."
@@ -205,12 +222,19 @@
             class="p-4 border border-gray-200 rounded-lg"
           >
             <div class="flex justify-between items-center mb-2">
-              <span class="text-sm text-gray-600">{{ new Date(sale.sale_date).toLocaleString('az-AZ') }}</span>
-              <span class="font-semibold text-indigo-600">{{ parseFloat(sale.total_amount).toFixed(2) }} ₼ ({{ sale.payment_method === 'CASH' ? 'Nağd' : 'Kart' }})</span>
+              <span class="text-sm text-gray-600">{{
+                new Date(sale.sale_date).toLocaleString("az-AZ")
+              }}</span>
+              <span class="font-semibold text-indigo-600"
+                >{{ parseFloat(sale.total_amount).toFixed(2) }} ₼ ({{
+                  sale.payment_method === "CASH" ? "Nağd" : "Kart"
+                }})</span
+              >
             </div>
             <ul class="text-sm text-gray-700 list-disc list-inside">
               <li v-for="item in sale.items" :key="item.sale_item_id">
-                {{ item.product?.name }} × {{ item.quantity }} = {{ parseFloat(item.subtotal).toFixed(2) }} ₼
+                {{ item.product?.name }} × {{ item.quantity }} =
+                {{ parseFloat(item.subtotal).toFixed(2) }} ₼
               </li>
             </ul>
           </div>
@@ -270,7 +294,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, nextTick } from "vue";
 import { useAuthStore } from "../../stores/auth";
 import { useProductStore } from "../../stores/product";
 import { useSalesStore } from "../../stores/sales";
@@ -285,6 +309,11 @@ const paymentMethod = ref("CASH");
 const showAddProduct = ref(false);
 const newProduct = ref({ name: "", price: 0, stock: 0 });
 
+const barcodeInput = ref("");
+const barcodeInputEl = ref(null);
+const barcodeMessage = ref("");
+const barcodeMessageOk = ref(false);
+
 const tabs = [
   { id: "sales", label: "Satış (POS)" },
   { id: "inventory", label: "İnventar" },
@@ -298,12 +327,40 @@ const filteredProducts = computed(() => {
   );
 });
 
+function focusBarcodeInput() {
+  nextTick(() => barcodeInputEl.value?.focus());
+}
+
+function handleBarcodeScan() {
+  const code = barcodeInput.value.trim();
+  barcodeInput.value = "";
+  if (!code) return;
+
+  const match = productStore.products.find(
+    (p) =>
+      (p.barcode && p.barcode.toLowerCase() === code.toLowerCase()) ||
+      (p.product_code && p.product_code.toLowerCase() === code.toLowerCase()),
+  );
+
+  if (match) {
+    salesStore.addToCart(match);
+    barcodeMessageOk.value = true;
+    barcodeMessage.value = `${match.product_name} səbətə əlavə olundu.`;
+  } else {
+    barcodeMessageOk.value = false;
+    barcodeMessage.value = `"${code}" kodlu məhsul tapılmadı.`;
+  }
+
+  focusBarcodeInput();
+}
+
 onMounted(() => {
   const kioskId = authStore.user?.assigned_kiosk_id;
   if (kioskId) {
     productStore.fetchProducts(kioskId);
     salesStore.fetchHistory(kioskId);
   }
+  focusBarcodeInput();
 });
 
 async function completeSale() {

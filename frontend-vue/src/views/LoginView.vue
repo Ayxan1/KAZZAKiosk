@@ -11,6 +11,18 @@
       <form @submit.prevent="handleLogin" class="space-y-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Kiosk Adı</label
+          >
+          <input
+            v-model="kioskName"
+            type="text"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            placeholder="Satıcılar üçün. Admin boş buraxsın"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
             >İstifadəçi adı</label
           >
           <input
@@ -18,7 +30,6 @@
             type="text"
             required
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            placeholder="admin"
           />
         </div>
 
@@ -33,26 +44,6 @@
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="••••••••"
           />
-        </div>
-
-        <div v-if="showKioskSelect">
-          <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Kiosk</label
-          >
-          <select
-            v-model="selectedKiosk"
-            required
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          >
-            <option value="">Kiosk seçin...</option>
-            <option
-              v-for="kiosk in kioskStore.kiosks"
-              :key="kiosk.kiosk_id"
-              :value="kiosk.kiosk_id"
-            >
-              {{ kiosk.kiosk_name }}
-            </option>
-          </select>
         </div>
 
         <div
@@ -70,40 +61,21 @@
           {{ authStore.loading ? "Giriş edilir..." : "Daxil ol" }}
         </button>
       </form>
-
-      <div
-        class="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-600"
-      >
-        <p><strong>Admin:</strong> admin / admin123</p>
-        <p class="mt-1"><strong>Seller:</strong> seller / seller123</p>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref } from "vue";
 import { useAuthStore } from "../stores/auth";
-import { useKioskStore } from "../stores/kiosk";
 
 const authStore = useAuthStore();
-const kioskStore = useKioskStore();
 
+const kioskName = ref("");
 const username = ref("");
 const password = ref("");
-const selectedKiosk = ref("");
-
-const showKioskSelect = computed(() => username.value === "seller");
-
-onMounted(() => {
-  kioskStore.fetchPublicKiosks();
-});
 
 async function handleLogin() {
-  await authStore.login(
-    username.value,
-    password.value,
-    showKioskSelect.value ? selectedKiosk.value : null,
-  );
+  await authStore.login(username.value, password.value, kioskName.value);
 }
 </script>

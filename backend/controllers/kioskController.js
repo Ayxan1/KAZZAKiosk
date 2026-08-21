@@ -5,36 +5,6 @@ const {
     Product
 } = require('../models');
 
-// Get minimal public kiosk list (no auth required)
-// Used by the login page so sellers can pick their kiosk before authenticating.
-// Only exposes non-sensitive fields (id + name) for active kiosks.
-exports.getPublicKiosks = async (req, res) => {
-    try {
-        const kiosks = await Kiosk.findAll({
-            where: {
-                is_active: true
-            },
-            attributes: ['kiosk_id', 'kiosk_name'],
-            order: [
-                ['kiosk_name', 'ASC']
-            ]
-        });
-
-        res.json({
-            success: true,
-            count: kiosks.length,
-            kiosks
-        });
-    } catch (error) {
-        console.error('Get public kiosks error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server xətası.',
-            error: error.message
-        });
-    }
-};
-
 // Get all kiosks (Admin only)
 exports.getAllKiosks = async (req, res) => {
     try {

@@ -19,7 +19,7 @@ exports.login = async (req, res) => {
         const {
             username,
             password,
-            kiosk_id
+            kiosk_name
         } = req.body;
 
         // Validate input
@@ -58,19 +58,21 @@ exports.login = async (req, res) => {
             });
         }
 
-        // If seller, check kiosk access
+        // If seller, they must type the exact name of the kiosk they are assigned to.
+        // Admin does not need/use a kiosk name.
         if (user.role === 'seller') {
-            if (!kiosk_id) {
+            if (!kiosk_name || !kiosk_name.trim()) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Kiosk seçməlisiniz.'
+                    message: 'Kiosk adını daxil edin.'
                 });
             }
 
-            if (user.assigned_kiosk_id !== kiosk_id) {
+            if (!user.assignedKiosk ||
+                user.assignedKiosk.kiosk_name.trim().toLowerCase() !== kiosk_name.trim().toLowerCase()) {
                 return res.status(403).json({
                     success: false,
-                    message: 'Bu kioska giriş icazəniz yoxdur.'
+                    message: 'Kiosk adı yanlışdır və ya bu kioska giriş icazəniz yoxdur.'
                 });
             }
         }

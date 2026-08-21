@@ -10,6 +10,9 @@ const {
 // All routes require authentication
 router.use(authenticate);
 
+// Get products across all kiosks (Admin only)
+router.get('/all', isAdmin, productController.getAllKioskProducts);
+
 // Get products for a kiosk
 router.get('/kiosk/:kioskId', hasKioskAccess('kioskId'), productController.getKioskProducts);
 

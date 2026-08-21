@@ -12,6 +12,79 @@ const {
     Op
 } = require('sequelize');
 
+// Get products across ALL kiosks (Admin only) - used for the admin inventory table
+exports.getAllKioskProducts = async (req, res) => {
+    try {
+        const {
+            kioskId,
+            search
+        } = req.query;
+
+        const whereClause = {};
+        if (kioskId) {
+            whereClause.kiosk_id = kioskId;
+        }
+
+        const productWhere = {};
+        if (search) {
+            productWhere[Op.or] = [{
+                    name: {
+                        [Op.iLike]: `%${search}%`
+                    }
+                },
+                {
+                    product_code: {
+                        [Op.iLike]: `%${search}%`
+                    }
+                },
+                {
+                    barcode: {
+                        [Op.iLike]: `%${search}%`
+                    }
+                }
+            ];
+        }
+
+        const products = await KioskProduct.findAll({
+            where: whereClause,
+            include: [{
+                    model: Product,
+                    as: 'product',
+                    where: Object.keys(productWhere).length > 0 ? productWhere : undefined
+                },
+                {
+                    model: Kiosk,
+                    as: 'kiosk',
+                    attributes: ['kiosk_id', 'kiosk_name']
+                }
+            ],
+            order: [
+                [{
+                    model: Kiosk,
+                    as: 'kiosk'
+                }, 'kiosk_name', 'ASC'],
+                [{
+                    model: Product,
+                    as: 'product'
+                }, 'name', 'ASC']
+            ]
+        });
+
+        res.json({
+            success: true,
+            count: products.length,
+            products
+        });
+    } catch (error) {
+        console.error('Get all kiosk products error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server xətası.',
+            error: error.message
+        });
+    }
+};
+
 // Get products for a kiosk
 exports.getKioskProducts = async (req, res) => {
     try {
