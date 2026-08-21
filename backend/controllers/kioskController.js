@@ -4,6 +4,9 @@ const {
     KioskProduct,
     Product
 } = require('../models');
+const {
+    logActivity
+} = require('../utils/activityLogger');
 
 // Get all kiosks (Admin only)
 exports.getAllKiosks = async (req, res) => {
@@ -101,6 +104,12 @@ exports.createKiosk = async (req, res) => {
             kiosk_name
         });
 
+        await logActivity(
+            req.user.user_id,
+            'CREATE_KIOSK',
+            `${req.user.full_name} "${kiosk_name}" adlı kiosk yaratdı.`
+        );
+
         res.status(201).json({
             success: true,
             message: 'Kiosk uğurla yaradıldı.',
@@ -140,6 +149,12 @@ exports.updateKiosk = async (req, res) => {
             kiosk_name,
             is_active
         });
+
+        await logActivity(
+            req.user.user_id,
+            'UPDATE_KIOSK',
+            `${req.user.full_name} "${kiosk_name}" kioskunu yenilədi (aktiv: ${is_active ? 'bəli' : 'xeyr'}).`
+        );
 
         res.json({
             success: true,

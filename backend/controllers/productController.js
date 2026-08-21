@@ -11,6 +11,9 @@ const {
 const {
     Op
 } = require('sequelize');
+const {
+    logActivity
+} = require('../utils/activityLogger');
 
 // Get products across ALL kiosks (Admin only) - used for the admin inventory table
 exports.getAllKioskProducts = async (req, res) => {
@@ -244,6 +247,12 @@ exports.addProductToKiosk = async (req, res) => {
 
         await transaction.commit();
 
+        await logActivity(
+            req.user.user_id,
+            'CREATE_PRODUCT',
+            `${req.user.full_name} "${name}" məhsulunu kioska əlavə etdi.`
+        );
+
         const result = await KioskProduct.findByPk(kioskProduct.kiosk_product_id, {
             include: [{
                 model: Product,
@@ -401,6 +410,14 @@ exports.updateKioskProduct = async (req, res) => {
 
         await transaction.commit();
 
+        if (changes.length > 0) {
+            await logActivity(
+                req.user.user_id,
+                'UPDATE_PRODUCT',
+                `${req.user.full_name} "${product.name}" məhsulunda dəyişiklik etdi: ${changes.join(', ')}.`
+            );
+        }
+
         const result = await KioskProduct.findOne({
             where: {
                 kiosk_id: kioskId,
@@ -440,7 +457,11 @@ exports.deleteKioskProduct = async (req, res) => {
             where: {
                 kiosk_id: kioskId,
                 product_id: productId
-            }
+            },
+            include: [{
+                model: Product,
+                as: 'product'
+            }]
         });
 
         if (!kioskProduct) {
@@ -450,7 +471,15 @@ exports.deleteKioskProduct = async (req, res) => {
             });
         }
 
+        const productName = kioskProduct.product?.name || productId;
+
         await kioskProduct.destroy();
+
+        await logActivity(
+            req.user.user_id,
+            'DELETE_PRODUCT',
+            `${req.user.full_name} "${productName}" məhsulunu kioskdan sildi.`
+        );
 
         res.json({
             success: true,

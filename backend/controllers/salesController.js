@@ -12,6 +12,9 @@ const {
 const {
     Op
 } = require('sequelize');
+const {
+    logActivity
+} = require('../utils/activityLogger');
 
 // Create a new sale
 exports.createSale = async (req, res) => {
@@ -112,6 +115,12 @@ exports.createSale = async (req, res) => {
         }
 
         await transaction.commit();
+
+        await logActivity(
+            req.user.user_id,
+            'CREATE_SALE',
+            `${req.user.full_name} ${totalAmount.toFixed(2)} ₼ məbləğində satış etdi (${saleItems.length} məhsul, ${payment_method}).`
+        );
 
         const result = await Sale.findByPk(sale.sale_id, {
             include: [{

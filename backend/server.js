@@ -5,6 +5,9 @@ const morgan = require('morgan');
 const {
     sequelize
 } = require('./config/database');
+const {
+    ActivityLog
+} = require('./models');
 
 const app = express();
 
@@ -26,6 +29,7 @@ app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/sales', require('./routes/salesRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/activity-logs', require('./routes/activityRoutes'));
 app.use('/api/seed', require('./routes/seed')); // Seed endpoint
 
 // Health check
@@ -63,6 +67,10 @@ const startServer = async () => {
             });
             console.log('✅ Database models synchronized');
         }
+
+        // Always ensure the activity_logs table exists (new, non-destructive:
+        // only creates this one table if missing, never touches existing ones).
+        await ActivityLog.sync();
 
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);

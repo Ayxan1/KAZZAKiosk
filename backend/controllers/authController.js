@@ -3,6 +3,9 @@ const {
     User,
     Kiosk
 } = require('../models');
+const {
+    logActivity
+} = require('../utils/activityLogger');
 
 // Generate JWT token
 const generateToken = (userId) => {
@@ -63,6 +66,12 @@ exports.login = async (req, res) => {
         // Generate token
         const token = generateToken(user.user_id);
 
+        await logActivity(
+            user.user_id,
+            'LOGIN',
+            `${user.full_name} (${user.username}) sistemə daxil oldu.`
+        );
+
         // Return user data without password
         const userData = {
             user_id: user.user_id,
@@ -108,6 +117,30 @@ exports.getProfile = async (req, res) => {
         });
     } catch (error) {
         console.error('Get profile error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server xətası.',
+            error: error.message
+        });
+    }
+};
+
+// Logout - logs the event for the admin activity log. The JWT itself
+// is stateless (not revoked server-side); the client discards the token.
+exports.logout = async (req, res) => {
+    try {
+        await logActivity(
+            req.user.user_id,
+            'LOGOUT',
+            `${req.user.full_name} (${req.user.username}) sistemdən çıxdı.`
+        );
+
+        res.json({
+            success: true,
+            message: 'Çıxış edildi.'
+        });
+    } catch (error) {
+        console.error('Logout error:', error);
         res.status(500).json({
             success: false,
             message: 'Server xətası.',

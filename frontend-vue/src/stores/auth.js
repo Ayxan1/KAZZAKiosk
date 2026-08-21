@@ -69,7 +69,15 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    function logout() {
+    async function logout() {
+        try {
+            if (token.value) {
+                await apiClient.post('/auth/logout')
+            }
+        } catch (err) {
+            // Ignore - logout must proceed locally even if the request fails
+        }
+
         user.value = null
         token.value = null
         localStorage.removeItem('token')

@@ -2,6 +2,9 @@ const {
     User,
     Kiosk
 } = require('../models');
+const {
+    logActivity
+} = require('../utils/activityLogger');
 
 // Get all users (Admin only)
 exports.getAllUsers = async (req, res) => {
@@ -85,6 +88,12 @@ exports.createUser = async (req, res) => {
             }]
         });
 
+        await logActivity(
+            req.user.user_id,
+            'CREATE_USER',
+            `${req.user.full_name} yeni istifadəçi yaratdı: ${full_name} (${username}, ${role}).`
+        );
+
         res.status(201).json({
             success: true,
             message: 'İstifadəçi uğurla yaradıldı.',
@@ -160,6 +169,12 @@ exports.updateUser = async (req, res) => {
             }]
         });
 
+        await logActivity(
+            req.user.user_id,
+            'UPDATE_USER',
+            `${req.user.full_name} istifadəçini yenilədi: ${full_name} (${username})${password ? ', şifrə sıfırlandı' : ''}.`
+        );
+
         res.json({
             success: true,
             message: 'İstifadəçi uğurla yeniləndi.',
@@ -192,6 +207,12 @@ exports.deleteUser = async (req, res) => {
         }
 
         await user.destroy();
+
+        await logActivity(
+            req.user.user_id,
+            'DELETE_USER',
+            `${req.user.full_name} istifadəçini sildi: ${user.full_name} (${user.username}).`
+        );
 
         res.json({
             success: true,

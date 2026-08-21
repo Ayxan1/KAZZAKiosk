@@ -352,6 +352,57 @@
         </div>
       </div>
 
+      <!-- Activity Log Tab -->
+      <div
+        v-else-if="activeTab === 'activity'"
+        class="bg-white rounded-xl shadow-sm p-6"
+      >
+        <h2 class="text-xl font-semibold mb-4">Fəaliyyət Jurnalı</h2>
+        <div v-if="activityStore.loading" class="text-gray-600">
+          Yüklənir...
+        </div>
+        <div v-else-if="activityStore.logs.length === 0" class="text-gray-600">
+          Hələ heç bir fəaliyyət qeydə alınmayıb.
+        </div>
+        <div v-else class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="text-gray-600 border-b border-gray-200">
+              <tr>
+                <th class="py-2 pr-4">Tarix</th>
+                <th class="py-2 pr-4">İstifadəçi</th>
+                <th class="py-2 pr-4">Əməliyyat</th>
+                <th class="py-2 pr-4">Təsvir</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="log in activityStore.logs"
+                :key="log.log_id"
+                class="border-b border-gray-100"
+              >
+                <td class="py-2 pr-4 whitespace-nowrap">
+                  {{ new Date(log.created_at).toLocaleString("az-AZ") }}
+                </td>
+                <td class="py-2 pr-4">
+                  {{ log.user?.full_name || "-" }}
+                  <span v-if="log.user" class="text-gray-500"
+                    >({{ log.user.username }})</span
+                  >
+                </td>
+                <td class="py-2 pr-4">
+                  <span
+                    class="px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700"
+                  >
+                    {{ actionLabels[log.action_type] || log.action_type }}
+                  </span>
+                </td>
+                <td class="py-2 pr-4">{{ log.description }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Users Tab -->
       <div
         v-else-if="activeTab === 'users'"
@@ -530,12 +581,14 @@ import { useKioskStore } from "../../stores/kiosk";
 import { useReportStore } from "../../stores/report";
 import { useUserStore } from "../../stores/user";
 import { useProductStore } from "../../stores/product";
+import { useActivityStore } from "../../stores/activity";
 
 const authStore = useAuthStore();
 const kioskStore = useKioskStore();
 const reportStore = useReportStore();
 const userStore = useUserStore();
 const productStore = useProductStore();
+const activityStore = useActivityStore();
 
 const activeTab = ref("dashboard");
 
@@ -545,7 +598,22 @@ const tabs = [
   { id: "products", label: "Məhsullar" },
   { id: "history", label: "Məhsul Tarixçəsi" },
   { id: "users", label: "İstifadəçilər" },
+  { id: "activity", label: "Fəaliyyət Jurnalı" },
 ];
+
+const actionLabels = {
+  LOGIN: "Giriş",
+  LOGOUT: "Çıxış",
+  CREATE_PRODUCT: "Məhsul əlavə edildi",
+  UPDATE_PRODUCT: "Məhsul yeniləndi",
+  DELETE_PRODUCT: "Məhsul silindi",
+  CREATE_SALE: "Satış",
+  CREATE_KIOSK: "Kiosk yaradıldı",
+  UPDATE_KIOSK: "Kiosk yeniləndi",
+  CREATE_USER: "İstifadəçi yaradıldı",
+  UPDATE_USER: "İstifadəçi yeniləndi",
+  DELETE_USER: "İstifadəçi silindi",
+};
 
 // --- Kiosks ---
 const showNewKioskForm = ref(false);
@@ -681,5 +749,6 @@ onMounted(() => {
   reportStore.fetchProductHistory();
   userStore.fetchUsers();
   loadAllProducts();
+  activityStore.fetchLogs();
 });
 </script>

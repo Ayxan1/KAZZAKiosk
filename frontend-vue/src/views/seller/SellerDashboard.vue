@@ -258,6 +258,18 @@
             class="w-full px-4 py-2 border rounded-lg"
           />
           <input
+            v-model="newProduct.product_code"
+            type="text"
+            placeholder="Kod (opsional)"
+            class="w-full px-4 py-2 border rounded-lg"
+          />
+          <input
+            v-model="newProduct.barcode"
+            type="text"
+            placeholder="Barkod (opsional)"
+            class="w-full px-4 py-2 border rounded-lg"
+          />
+          <input
             v-model="newProduct.price"
             type="number"
             step="0.01"
@@ -307,7 +319,13 @@ const activeTab = ref("sales");
 const searchQuery = ref("");
 const paymentMethod = ref("CASH");
 const showAddProduct = ref(false);
-const newProduct = ref({ name: "", price: 0, stock: 0 });
+const newProduct = ref({
+  name: "",
+  product_code: "",
+  barcode: "",
+  price: 0,
+  stock: 0,
+});
 
 const barcodeInput = ref("");
 const barcodeInputEl = ref(null);
@@ -376,13 +394,21 @@ async function addProduct() {
   const kioskId = authStore.user?.assigned_kiosk_id;
   const success = await productStore.addProduct(kioskId, {
     product_name: newProduct.value.name,
+    product_code: newProduct.value.product_code,
+    barcode: newProduct.value.barcode,
     price: newProduct.value.price,
     stock_quantity: newProduct.value.stock,
   });
 
   if (success) {
     showAddProduct.value = false;
-    newProduct.value = { name: "", price: 0, stock: 0 };
+    newProduct.value = {
+      name: "",
+      product_code: "",
+      barcode: "",
+      price: 0,
+      stock: 0,
+    };
   }
 }
 </script>
