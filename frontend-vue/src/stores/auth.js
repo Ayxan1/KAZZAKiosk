@@ -19,14 +19,13 @@ export const useAuthStore = defineStore('auth', () => {
     const isAdmin = computed(() => user.value?.role === 'admin')
     const isSeller = computed(() => user.value?.role === 'seller')
 
-    async function login(username, password, kioskName = null) {
+    async function login(username, password) {
         loading.value = true
         error.value = null
         try {
             const data = await apiClient.post('/auth/login', {
                 username,
-                password,
-                kiosk_name: kioskName || undefined
+                password
             })
 
             token.value = data.token

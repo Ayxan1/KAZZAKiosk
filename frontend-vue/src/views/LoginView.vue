@@ -11,18 +11,6 @@
       <form @submit.prevent="handleLogin" class="space-y-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Kiosk Adı</label
-          >
-          <input
-            v-model="kioskName"
-            type="text"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            placeholder="Satıcılar üçün. Admin boş buraxsın"
-          />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2"
             >İstifadəçi adı</label
           >
           <input
@@ -71,11 +59,10 @@ import { useAuthStore } from "../stores/auth";
 
 const authStore = useAuthStore();
 
-const kioskName = ref("");
 const username = ref("");
 const password = ref("");
 
 async function handleLogin() {
-  await authStore.login(username.value, password.value, kioskName.value);
+  await authStore.login(username.value, password.value);
 }
 </script>

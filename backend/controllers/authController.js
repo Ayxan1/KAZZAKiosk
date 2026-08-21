@@ -18,8 +18,7 @@ exports.login = async (req, res) => {
     try {
         const {
             username,
-            password,
-            kiosk_name
+            password
         } = req.body;
 
         // Validate input
@@ -58,24 +57,8 @@ exports.login = async (req, res) => {
             });
         }
 
-        // If seller, they must type the exact name of the kiosk they are assigned to.
-        // Admin does not need/use a kiosk name.
-        if (user.role === 'seller') {
-            if (!kiosk_name || !kiosk_name.trim()) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Kiosk adını daxil edin.'
-                });
-            }
-
-            if (!user.assignedKiosk ||
-                user.assignedKiosk.kiosk_name.trim().toLowerCase() !== kiosk_name.trim().toLowerCase()) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Kiosk adı yanlışdır və ya bu kioska giriş icazəniz yoxdur.'
-                });
-            }
-        }
+        // Kiosk assignment is already known from the user's own record (assigned_kiosk_id),
+        // so sellers don't need to type/select anything about their kiosk to log in.
 
         // Generate token
         const token = generateToken(user.user_id);
