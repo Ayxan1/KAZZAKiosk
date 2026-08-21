@@ -157,6 +157,13 @@
               <option value="CARD">Kart</option>
             </select>
 
+            <p
+              v-if="salesStore.error"
+              class="text-red-600 text-sm mb-3 font-medium"
+            >
+              {{ salesStore.error }}
+            </p>
+
             <button
               @click="completeSale"
               :disabled="salesStore.cart.length === 0"
@@ -270,16 +277,18 @@
             class="w-full px-4 py-2 border rounded-lg"
           />
           <input
-            v-model="newProduct.price"
+            v-model.number="newProduct.price"
             type="number"
             step="0.01"
+            min="0"
             placeholder="Qiymət"
             required
             class="w-full px-4 py-2 border rounded-lg"
           />
           <input
-            v-model="newProduct.stock"
+            v-model.number="newProduct.stock"
             type="number"
+            min="0"
             placeholder="Stok"
             required
             class="w-full px-4 py-2 border rounded-lg"
@@ -323,8 +332,8 @@ const newProduct = ref({
   name: "",
   product_code: "",
   barcode: "",
-  price: 0,
-  stock: 0,
+  price: null,
+  stock: null,
 });
 
 const barcodeInput = ref("");
@@ -361,9 +370,14 @@ function handleBarcodeScan() {
   );
 
   if (match) {
-    salesStore.addToCart(match);
-    barcodeMessageOk.value = true;
-    barcodeMessage.value = `${match.product_name} səbətə əlavə olundu.`;
+    const added = salesStore.addToCart(match);
+    if (added) {
+      barcodeMessageOk.value = true;
+      barcodeMessage.value = `${match.product_name} səbətə əlavə olundu.`;
+    } else {
+      barcodeMessageOk.value = false;
+      barcodeMessage.value = salesStore.error || `${match.product_name} üçün kifayət qədər stok yoxdur.`;
+    }
   } else {
     barcodeMessageOk.value = false;
     barcodeMessage.value = `"${code}" kodlu məhsul tapılmadı.`;
@@ -396,8 +410,8 @@ async function addProduct() {
     product_name: newProduct.value.name,
     product_code: newProduct.value.product_code,
     barcode: newProduct.value.barcode,
-    price: newProduct.value.price,
-    stock_quantity: newProduct.value.stock,
+    price: Number(newProduct.value.price) || 0,
+    stock_quantity: Number(newProduct.value.stock) || 0,
   });
 
   if (success) {
@@ -406,8 +420,8 @@ async function addProduct() {
       name: "",
       product_code: "",
       barcode: "",
-      price: 0,
-      stock: 0,
+      price: null,
+      stock: null,
     };
   }
 }

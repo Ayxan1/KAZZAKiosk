@@ -11,6 +11,7 @@ export const useSalesStore = defineStore('sales', () => {
     const cart = ref([])
     const loading = ref(false)
     const history = ref([])
+    const error = ref(null)
 
     const cartTotal = computed(() =>
         cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0)
@@ -22,6 +23,15 @@ export const useSalesStore = defineStore('sales', () => {
 
     function addToCart(product) {
         const existing = cart.value.find(item => item.product_id === product.product_id)
+        const currentQty = existing ? existing.quantity : 0
+        const available = product.stock_quantity ?? 0
+
+        if (currentQty + 1 > available) {
+            error.value = `${product.product_name} üçün kifayət qədər stok yoxdur. Mövcud: ${available}`
+            return false
+        }
+
+        error.value = null
         if (existing) {
             existing.quantity++
         } else {
@@ -30,6 +40,7 @@ export const useSalesStore = defineStore('sales', () => {
                 quantity: 1
             })
         }
+        return true
     }
 
     function removeFromCart(productId) {
@@ -38,9 +49,19 @@ export const useSalesStore = defineStore('sales', () => {
 
     function updateQuantity(productId, quantity) {
         const item = cart.value.find(item => item.product_id === productId)
-        if (item) {
-            item.quantity = Math.max(1, quantity)
+        if (!item) return
+
+        const desiredQty = Math.max(1, quantity)
+        const available = item.stock_quantity ?? 0
+
+        if (desiredQty > available) {
+            error.value = `${item.product_name} üçün kifayət qədər stok yoxdur. Mövcud: ${available}`
+            item.quantity = available > 0 ? available : 1
+            return
         }
+
+        error.value = null
+        item.quantity = desiredQty
     }
 
     function clearCart() {
@@ -49,6 +70,7 @@ export const useSalesStore = defineStore('sales', () => {
 
     async function completeSale(kioskId, paymentMethod) {
         loading.value = true
+        error.value = null
         try {
             const items = cart.value.map(item => ({
                 product_id: item.product_id,
@@ -65,6 +87,7 @@ export const useSalesStore = defineStore('sales', () => {
             clearCart()
             return true
         } catch (err) {
+            error.value = (err && err.message) || 'Satış tamamlana bilmədi. Stok kifayət etmir.'
             console.error('Satış tamamlana bilmədi:', err)
             return false
         } finally {
@@ -88,6 +111,7 @@ export const useSalesStore = defineStore('sales', () => {
         cart,
         loading,
         history,
+        error,
         cartTotal,
         cartCount,
         addToCart,
