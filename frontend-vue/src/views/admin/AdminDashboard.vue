@@ -309,7 +309,6 @@
         </div>
       </div>
 
-
       <!-- Product History Tab -->
       <div
         v-else-if="activeTab === 'history'"
@@ -598,7 +597,10 @@ function loadAllProducts() {
 }
 
 async function handleCreateProduct() {
-  const ok = await productStore.addProduct(newProduct.value.kiosk_id, newProduct.value);
+  const ok = await productStore.addProduct(
+    newProduct.value.kiosk_id,
+    newProduct.value,
+  );
   if (ok) {
     newProduct.value = {
       kiosk_id: "",
