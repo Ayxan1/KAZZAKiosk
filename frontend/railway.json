@@ -1,4 +1,3 @@
-# Railway Frontend Configuration
 {
     "build": {
         "builder": "DOCKERFILE",
