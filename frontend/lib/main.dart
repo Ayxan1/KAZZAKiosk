@@ -6,7 +6,8 @@ import 'providers/kiosk_provider.dart';
 import 'providers/product_provider.dart';
 import 'providers/sales_provider.dart';
 import 'screens/login_screen.dart';
-import 'router/app_router.dart';
+import 'screens/admin/admin_home_screen.dart';
+import 'screens/seller/seller_home_screen.dart';
 import 'utils/theme.dart';
 
 void main() {
@@ -27,28 +28,41 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
-          // Debug: Bypass router temporarily to test
           return MaterialApp(
             title: 'KAZZAKIOSK',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
-            home: authProvider.isLoading
-                ? const Scaffold(
-                    body: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text('Loading...'),
-                        ],
-                      ),
-                    ),
-                  )
-                : const LoginScreen(),
+            home: _buildHome(authProvider),
           );
         },
       ),
     );
+  }
+
+  Widget _buildHome(AuthProvider authProvider) {
+    if (authProvider.isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Yüklənir...'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (!authProvider.isAuthenticated) {
+      return const LoginScreen();
+    }
+
+    if (authProvider.isAdmin) {
+      return const AdminHomeScreen();
+    }
+
+    return const SellerHomeScreen();
   }
 }
