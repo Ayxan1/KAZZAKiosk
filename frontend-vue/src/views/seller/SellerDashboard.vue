@@ -376,7 +376,9 @@ function handleBarcodeScan() {
       barcodeMessage.value = `${match.product_name} səbətə əlavə olundu.`;
     } else {
       barcodeMessageOk.value = false;
-      barcodeMessage.value = salesStore.error || `${match.product_name} üçün kifayət qədər stok yoxdur.`;
+      barcodeMessage.value =
+        salesStore.error ||
+        `${match.product_name} üçün kifayət qədər stok yoxdur.`;
     }
   } else {
     barcodeMessageOk.value = false;
