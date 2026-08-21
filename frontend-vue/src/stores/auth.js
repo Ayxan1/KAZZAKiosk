@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
     const loading = ref(false)
     const error = ref(null)
 
-    const isAuthenticated = computed(() => !!user.value && !!token.value)
+    const isAuthenticated = computed(() => !!token.value)
     const isAdmin = computed(() => user.value?.role === 'admin')
     const isSeller = computed(() => user.value?.role === 'seller')
 
@@ -43,13 +43,24 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function checkAuth() {
-        if (!token.value) return
+        if (!token.value) {
+            user.value = null
+            return
+        }
 
         try {
             const data = await apiClient.get('/auth/profile')
             user.value = data.user
         } catch (err) {
-            logout()
+            // Only logout if not already on login page
+            if (router.currentRoute.value?.path !== '/login') {
+                logout()
+            } else {
+                // Clear invalid token silently
+                user.value = null
+                token.value = null
+                localStorage.removeItem('token')
+            }
         }
     }
 
@@ -57,7 +68,11 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = null
         token.value = null
         localStorage.removeItem('token')
-        router.push('/login')
+        
+        // Prevent infinite redirect loop
+        if (router.currentRoute.value.path !== '/login') {
+            router.push('/login')
+        }
     }
 
     return {
