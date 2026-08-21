@@ -26,6 +26,20 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
+          // Show loading screen while checking authentication
+          if (authProvider.isLoading) {
+            return MaterialApp(
+              title: 'KAZZAKIOSK',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              home: const Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            );
+          }
+
           return MaterialApp.router(
             title: 'KAZZAKIOSK',
             debugShowCheckedModeBanner: false,
