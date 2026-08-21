@@ -8,11 +8,28 @@ class AuthProvider with ChangeNotifier {
   User? _user;
   String? _token;
   Kiosk? _selectedKiosk;
-  bool _isLoading = true; // Start with loading true
+  bool _isLoading = false; // Start false, check token manually if needed
   String? _error;
 
   AuthProvider() {
-    init();
+    // Don't auto-init, let UI trigger it
+    _checkToken();
+  }
+
+  void _checkToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    _token = prefs.getString('token');
+
+    if (_token != null) {
+      ApiService.setToken(_token);
+      try {
+        await loadProfile();
+      } catch (e) {
+        // Silently fail and show login
+        _token = null;
+      }
+    }
+    notifyListeners();
   }
 
   User? get user => _user;
@@ -23,26 +40,6 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _user != null && _token != null;
   bool get isAdmin => _user?.isAdmin ?? false;
   bool get isSeller => _user?.isSeller ?? false;
-
-  Future<void> init() async {
-    _isLoading = true;
-    notifyListeners();
-
-    final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('token');
-
-    if (_token != null) {
-      ApiService.setToken(_token);
-      try {
-        await loadProfile();
-      } catch (e) {
-        await logout();
-      }
-    }
-
-    _isLoading = false;
-    notifyListeners();
-  }
 
   Future<bool> login(String username, String password, String? kioskId) async {
     _isLoading = true;
