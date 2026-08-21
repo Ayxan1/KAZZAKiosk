@@ -68,7 +68,7 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = null
         token.value = null
         localStorage.removeItem('token')
-        
+
         // Prevent infinite redirect loop
         if (router.currentRoute.value.path !== '/login') {
             router.push('/login')
