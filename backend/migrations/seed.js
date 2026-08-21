@@ -31,22 +31,20 @@ async function seedDatabase() {
         });
         console.log('✅ Kiosk created:', kiosk.kiosk_name);
 
-        // CREATE ADMIN USER
-        const adminPassword = await bcrypt.hash('admin123', 10);
+        // CREATE ADMIN USER (password hashed automatically by model hook)
         const admin = await User.create({
             username: 'admin',
-            password: adminPassword,
+            password: 'admin123',
             full_name: 'Admin User',
             role: 'admin',
             is_active: true
         });
         console.log('✅ Admin created - Username: admin | Password: admin123');
 
-        // CREATE SELLER USER
-        const sellerPassword = await bcrypt.hash('seller123', 10);
+        // CREATE SELLER USER (password hashed automatically by model hook)
         const seller = await User.create({
             username: 'seller',
-            password: sellerPassword,
+            password: 'seller123',
             full_name: 'Seller User',
             role: 'seller',
             assigned_kiosk_id: kiosk.kiosk_id,

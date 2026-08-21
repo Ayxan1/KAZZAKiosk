@@ -25,21 +25,19 @@ router.post('/run', async (req, res) => {
             is_active: true
         });
 
-        // Create admin
-        const adminPassword = await bcrypt.hash('admin123', 10);
+        // Create admin (password is hashed automatically by User model hook)
         await User.create({
             username: 'admin',
-            password: adminPassword,
+            password: 'admin123',
             full_name: 'Admin User',
             role: 'admin',
             is_active: true
         });
 
-        // Create seller
-        const sellerPassword = await bcrypt.hash('seller123', 10);
+        // Create seller (password is hashed automatically by User model hook)
         await User.create({
             username: 'seller',
-            password: sellerPassword,
+            password: 'seller123',
             full_name: 'Seller User',
             role: 'seller',
             assigned_kiosk_id: kiosk.kiosk_id,
