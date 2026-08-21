@@ -11,6 +11,7 @@ import 'screens/seller/seller_home_screen.dart';
 import 'utils/theme.dart';
 
 void main() {
+  print('=== KAZZAKIOSK APP STARTING ===');
   runApp(const MyApp());
 }
 
@@ -19,6 +20,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('=== MyApp build called ===');
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
@@ -40,7 +42,12 @@ class MyApp extends StatelessWidget {
   }
 
   Widget _buildHome(AuthProvider authProvider) {
+    print('=== _buildHome called ===');
+    print('isLoading: ${authProvider.isLoading}');
+    print('isAuthenticated: ${authProvider.isAuthenticated}');
+    
     if (authProvider.isLoading) {
+      print('Showing loading screen');
       return const Scaffold(
         body: Center(
           child: Column(
@@ -51,13 +58,16 @@ class MyApp extends StatelessWidget {
               Text('Yüklənir...'),
             ],
           ),
-        ),
-      );
-    }
-
-    if (!authProvider.isAuthenticated) {
+      print('Showing login screen');
       return const LoginScreen();
     }
+
+    if (authProvider.isAdmin) {
+      print('Showing admin screen');
+      return const AdminHomeScreen();
+    }
+
+    print('Showing seller screen');    }
 
     if (authProvider.isAdmin) {
       return const AdminHomeScreen();
