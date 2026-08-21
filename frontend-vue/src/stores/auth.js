@@ -13,8 +13,9 @@ export const useAuthStore = defineStore('auth', () => {
     const token = ref(localStorage.getItem('token'))
     const loading = ref(false)
     const error = ref(null)
+    const checkingAuth = ref(false) // Prevent multiple simultaneous checks
 
-    const isAuthenticated = computed(() => !!token.value)
+    const isAuthenticated = computed(() => !!token.value && !!user.value)
     const isAdmin = computed(() => user.value?.role === 'admin')
     const isSeller = computed(() => user.value?.role === 'seller')
 
@@ -43,24 +44,29 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function checkAuth() {
-        if (!token.value) {
-            user.value = null
-            return
+        // Prevent multiple simultaneous checks
+        if (checkingAuth.value) {
+            return !!user.value
         }
 
+        if (!token.value) {
+            user.value = null
+            return false
+        }
+
+        checkingAuth.value = true
         try {
             const data = await apiClient.get('/auth/profile')
             user.value = data.user
+            return true
         } catch (err) {
-            // Only logout if not already on login page
-            if (router.currentRoute.value?.path !== '/login') {
-                logout()
-            } else {
-                // Clear invalid token silently
-                user.value = null
-                token.value = null
-                localStorage.removeItem('token')
-            }
+            // Invalid token - clear everything
+            user.value = null
+            token.value = null
+            localStorage.removeItem('token')
+            return false
+        } finally {
+            checkingAuth.value = false
         }
     }
 

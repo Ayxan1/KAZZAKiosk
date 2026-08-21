@@ -43,16 +43,31 @@ const router = createRouter({
     routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore()
+    const hasToken = !!authStore.token
 
-    if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-        next('/login')
-    } else if (to.name === 'login' && authStore.isAuthenticated) {
-        next(authStore.user?.role === 'admin' ? '/admin' : '/seller')
-    } else {
-        next()
+    // If going to login page and already authenticated
+    if (to.path === '/login' && hasToken && authStore.user) {
+        return next(authStore.user.role === 'admin' ? '/admin' : '/seller')
     }
+
+    // If going to protected route
+    if (to.meta.requiresAuth) {
+        if (!hasToken) {
+            return next('/login')
+        }
+
+        // Has token but no user data yet - try to load it
+        if (!authStore.user) {
+            const success = await authStore.checkAuth()
+            if (!success) {
+                return next('/login')
+            }
+        }
+    }
+
+    next()
 })
 
 export default router

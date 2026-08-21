@@ -20,10 +20,8 @@ apiClient.interceptors.request.use(config => {
 apiClient.interceptors.response.use(
     response => response.data,
     error => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token')
-            window.location.href = '/login'
-        }
+        // Let the calling code handle 401 errors
+        // Don't redirect here to avoid infinite loops
         return Promise.reject(error.response?.data || error.message)
     }
 )
