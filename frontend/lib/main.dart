@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
     print('=== _buildHome called ===');
     print('isLoading: ${authProvider.isLoading}');
     print('isAuthenticated: ${authProvider.isAuthenticated}');
-    
+
     if (authProvider.isLoading) {
       print('Showing loading screen');
       return const Scaffold(
