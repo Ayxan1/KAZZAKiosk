@@ -8,8 +8,12 @@ class AuthProvider with ChangeNotifier {
   User? _user;
   String? _token;
   Kiosk? _selectedKiosk;
-  bool _isLoading = false;
+  bool _isLoading = true; // Start with loading true
   String? _error;
+
+  AuthProvider() {
+    init();
+  }
 
   User? get user => _user;
   String? get token => _token;
@@ -21,6 +25,9 @@ class AuthProvider with ChangeNotifier {
   bool get isSeller => _user?.isSeller ?? false;
 
   Future<void> init() async {
+    _isLoading = true;
+    notifyListeners();
+
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('token');
 
@@ -32,6 +39,9 @@ class AuthProvider with ChangeNotifier {
         await logout();
       }
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<bool> login(String username, String password, String? kioskId) async {

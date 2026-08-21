@@ -9,9 +9,16 @@ class AppRouter {
   static GoRouter router(AuthProvider authProvider) {
     return GoRouter(
       initialLocation: '/login',
+      refreshListenable: authProvider,
       redirect: (context, state) {
+        final isLoading = authProvider.isLoading;
         final isLoggedIn = authProvider.isAuthenticated;
         final isLoggingIn = state.matchedLocation == '/login';
+
+        // Wait for auth check to complete
+        if (isLoading) {
+          return null;
+        }
 
         if (!isLoggedIn && !isLoggingIn) {
           return '/login';
