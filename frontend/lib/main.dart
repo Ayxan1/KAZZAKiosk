@@ -58,6 +58,11 @@ class MyApp extends StatelessWidget {
               Text('Yüklənir...'),
             ],
           ),
+        ),
+      );
+    }
+
+    if (!authProvider.isAuthenticated) {
       print('Showing login screen');
       return const LoginScreen();
     }
@@ -67,12 +72,7 @@ class MyApp extends StatelessWidget {
       return const AdminHomeScreen();
     }
 
-    print('Showing seller screen');    }
-
-    if (authProvider.isAdmin) {
-      return const AdminHomeScreen();
-    }
-
+    print('Showing seller screen');
     return const SellerHomeScreen();
   }
 }
