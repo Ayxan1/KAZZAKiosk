@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { User, Kiosk } = require('../models');
+const {
+    User,
+    Kiosk
+} = require('../models');
 
 // Seed endpoint - ONLY for development/initial setup
 router.post('/run', async (req, res) => {
@@ -9,8 +12,12 @@ router.post('/run', async (req, res) => {
         console.log('🌱 Seeding database via API...');
 
         // Delete all existing data
-        await User.destroy({ where: {} });
-        await Kiosk.destroy({ where: {} });
+        await User.destroy({
+            where: {}
+        });
+        await Kiosk.destroy({
+            where: {}
+        });
 
         // Create kiosk
         const kiosk = await Kiosk.create({
@@ -43,8 +50,15 @@ router.post('/run', async (req, res) => {
             success: true,
             message: 'Database seeded successfully',
             credentials: {
-                admin: { username: 'admin', password: 'admin123' },
-                seller: { username: 'seller', password: 'seller123', kiosk: 'Kiosk A' }
+                admin: {
+                    username: 'admin',
+                    password: 'admin123'
+                },
+                seller: {
+                    username: 'seller',
+                    password: 'seller123',
+                    kiosk: 'Kiosk A'
+                }
             }
         });
     } catch (error) {
