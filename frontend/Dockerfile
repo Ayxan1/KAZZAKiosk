@@ -1,4 +1,5 @@
-# Frontend Dockerfile
+# Frontend Dockerfile for Flutter Web
+# Build date: 2026-08-21
 FROM debian:latest AS build-env
 
 # Install Flutter dependencies
