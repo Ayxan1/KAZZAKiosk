@@ -7,7 +7,10 @@ const {
     hasKioskAccess
 } = require('../middleware/auth');
 
-// All routes require authentication
+// Public route - used by login page to populate kiosk selector (no auth)
+router.get('/public', kioskController.getPublicKiosks);
+
+// All routes below require authentication
 router.use(authenticate);
 
 // Get all kiosks (Admin only)

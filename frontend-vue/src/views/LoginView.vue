@@ -96,7 +96,7 @@ const selectedKiosk = ref("");
 const showKioskSelect = computed(() => username.value === "seller");
 
 onMounted(() => {
-  kioskStore.fetchKiosks();
+  kioskStore.fetchPublicKiosks();
 });
 
 async function handleLogin() {

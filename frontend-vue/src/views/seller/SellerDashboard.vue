@@ -194,7 +194,27 @@
         class="bg-white rounded-xl shadow-sm p-6"
       >
         <h2 class="text-xl font-semibold mb-4">Satış Tarixçəsi</h2>
-        <p class="text-gray-600">Satış tarixçəsi burada görünəcək...</p>
+        <div v-if="salesStore.loading" class="text-gray-600">Yüklənir...</div>
+        <div v-else-if="salesStore.history.length === 0" class="text-gray-600">
+          Hələ heç bir satış edilməyib.
+        </div>
+        <div v-else class="space-y-2">
+          <div
+            v-for="sale in salesStore.history"
+            :key="sale.sale_id"
+            class="p-4 border border-gray-200 rounded-lg"
+          >
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm text-gray-600">{{ new Date(sale.sale_date).toLocaleString('az-AZ') }}</span>
+              <span class="font-semibold text-indigo-600">{{ parseFloat(sale.total_amount).toFixed(2) }} ₼ ({{ sale.payment_method === 'CASH' ? 'Nağd' : 'Kart' }})</span>
+            </div>
+            <ul class="text-sm text-gray-700 list-disc list-inside">
+              <li v-for="item in sale.items" :key="item.sale_item_id">
+                {{ item.product?.name }} × {{ item.quantity }} = {{ parseFloat(item.subtotal).toFixed(2) }} ₼
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -282,6 +302,7 @@ onMounted(() => {
   const kioskId = authStore.user?.assigned_kiosk_id;
   if (kioskId) {
     productStore.fetchProducts(kioskId);
+    salesStore.fetchHistory(kioskId);
   }
 });
 

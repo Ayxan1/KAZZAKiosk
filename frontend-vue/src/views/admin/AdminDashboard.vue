@@ -42,19 +42,31 @@
       <!-- Dashboard Tab -->
       <div
         v-if="activeTab === 'dashboard'"
-        class="grid grid-cols-1 md:grid-cols-3 gap-6"
+        class="grid grid-cols-1 md:grid-cols-4 gap-6"
       >
         <div class="bg-white p-6 rounded-xl shadow-sm">
-          <div class="text-3xl font-bold text-indigo-600 mb-2">12</div>
-          <div class="text-gray-600">Ümumi Kiosks</div>
+          <div class="text-3xl font-bold text-indigo-600 mb-2">
+            {{ kioskStore.kiosks.length }}
+          </div>
+          <div class="text-gray-600">Ümumi Kiosklar</div>
         </div>
         <div class="bg-white p-6 rounded-xl shadow-sm">
-          <div class="text-3xl font-bold text-green-600 mb-2">246</div>
-          <div class="text-gray-600">Ümumi Məhsullar</div>
+          <div class="text-3xl font-bold text-blue-600 mb-2">
+            {{ userStore.users.length }}
+          </div>
+          <div class="text-gray-600">Ümumi İstifadəçilər</div>
         </div>
         <div class="bg-white p-6 rounded-xl shadow-sm">
-          <div class="text-3xl font-bold text-purple-600 mb-2">1,543</div>
+          <div class="text-3xl font-bold text-purple-600 mb-2">
+            {{ reportStore.stats?.totalSales ?? 0 }}
+          </div>
           <div class="text-gray-600">Ümumi Satışlar</div>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <div class="text-3xl font-bold text-green-600 mb-2">
+            {{ (reportStore.stats?.totalRevenue ?? 0).toFixed(2) }} ₼
+          </div>
+          <div class="text-gray-600">Ümumi Gəlir</div>
         </div>
       </div>
 
@@ -96,9 +108,38 @@
         class="bg-white rounded-xl shadow-sm p-6"
       >
         <h2 class="text-xl font-semibold mb-4">Məhsul Dəyişiklik Tarixçəsi</h2>
-        <p class="text-gray-600">
-          Məhsul dəyişikliklərinin tarixçəsi burada görünəcək...
-        </p>
+        <div v-if="reportStore.loading" class="text-gray-600">Yüklənir...</div>
+        <div v-else-if="reportStore.productHistory.length === 0" class="text-gray-600">
+          Hələ heç bir dəyişiklik qeydə alınmayıb.
+        </div>
+        <div v-else class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="text-gray-600 border-b border-gray-200">
+              <tr>
+                <th class="py-2 pr-4">Tarix</th>
+                <th class="py-2 pr-4">Kiosk</th>
+                <th class="py-2 pr-4">Məhsul</th>
+                <th class="py-2 pr-4">İstifadəçi</th>
+                <th class="py-2 pr-4">Dəyişiklik</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="entry in reportStore.productHistory"
+                :key="entry.history_id"
+                class="border-b border-gray-100"
+              >
+                <td class="py-2 pr-4 whitespace-nowrap">
+                  {{ new Date(entry.created_at).toLocaleString('az-AZ') }}
+                </td>
+                <td class="py-2 pr-4">{{ entry.kiosk?.kiosk_name }}</td>
+                <td class="py-2 pr-4">{{ entry.product?.name }}</td>
+                <td class="py-2 pr-4">{{ entry.user?.full_name }}</td>
+                <td class="py-2 pr-4">{{ entry.description }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Users Tab -->
@@ -107,7 +148,32 @@
         class="bg-white rounded-xl shadow-sm p-6"
       >
         <h2 class="text-xl font-semibold mb-4">İstifadəçilər</h2>
-        <p class="text-gray-600">İstifadəçi siyahısı burada görünəcək...</p>
+        <div v-if="userStore.loading" class="text-gray-600">Yüklənir...</div>
+        <div v-else class="space-y-2">
+          <div
+            v-for="user in userStore.users"
+            :key="user.user_id"
+            class="p-4 border border-gray-200 rounded-lg flex justify-between items-center"
+          >
+            <div>
+              <h3 class="font-medium">{{ user.full_name }} ({{ user.username }})</h3>
+              <p class="text-sm text-gray-600">
+                {{ user.role === 'admin' ? 'Admin' : 'Satıcı' }}
+                <span v-if="user.assignedKiosk"> · {{ user.assignedKiosk.kiosk_name }}</span>
+              </p>
+            </div>
+            <span
+              :class="[
+                'px-3 py-1 rounded-full text-sm',
+                user.is_active
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-gray-100 text-gray-700',
+              ]"
+            >
+              {{ user.is_active ? "Aktiv" : "Deaktiv" }}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -117,9 +183,13 @@
 import { ref, onMounted } from "vue";
 import { useAuthStore } from "../../stores/auth";
 import { useKioskStore } from "../../stores/kiosk";
+import { useReportStore } from "../../stores/report";
+import { useUserStore } from "../../stores/user";
 
 const authStore = useAuthStore();
 const kioskStore = useKioskStore();
+const reportStore = useReportStore();
+const userStore = useUserStore();
 
 const activeTab = ref("dashboard");
 
@@ -132,5 +202,8 @@ const tabs = [
 
 onMounted(() => {
   kioskStore.fetchKiosks();
+  reportStore.fetchDashboardStats();
+  reportStore.fetchProductHistory();
+  userStore.fetchUsers();
 });
 </script>

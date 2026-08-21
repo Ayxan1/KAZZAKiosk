@@ -10,6 +10,7 @@ import apiClient from '../api/client'
 export const useSalesStore = defineStore('sales', () => {
     const cart = ref([])
     const loading = ref(false)
+    const history = ref([])
 
     const cartTotal = computed(() =>
         cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0)
@@ -71,15 +72,29 @@ export const useSalesStore = defineStore('sales', () => {
         }
     }
 
+    async function fetchHistory(kioskId) {
+        loading.value = true
+        try {
+            const data = await apiClient.get(`/sales/kiosk/${kioskId}`)
+            history.value = data.sales
+        } catch (err) {
+            console.error('Satış tarixçəsi yüklənə bilmədi:', err)
+        } finally {
+            loading.value = false
+        }
+    }
+
     return {
         cart,
         loading,
+        history,
         cartTotal,
         cartCount,
         addToCart,
         removeFromCart,
         updateQuantity,
         clearCart,
-        completeSale
+        completeSale,
+        fetchHistory
     }
 })
