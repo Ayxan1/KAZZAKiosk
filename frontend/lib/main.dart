@@ -5,6 +5,7 @@ import 'providers/auth_provider.dart';
 import 'providers/kiosk_provider.dart';
 import 'providers/product_provider.dart';
 import 'providers/sales_provider.dart';
+import 'screens/login_screen.dart';
 import 'router/app_router.dart';
 import 'utils/theme.dart';
 
@@ -26,25 +27,25 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
-          // Show loading screen while checking authentication
-          if (authProvider.isLoading) {
-            return MaterialApp(
-              title: 'KAZZAKIOSK',
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.lightTheme,
-              home: const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              ),
-            );
-          }
-
-          return MaterialApp.router(
+          // Debug: Bypass router temporarily to test
+          return MaterialApp(
             title: 'KAZZAKIOSK',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
-            routerConfig: AppRouter.router(authProvider),
+            home: authProvider.isLoading
+                ? const Scaffold(
+                    body: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Loading...'),
+                        ],
+                      ),
+                    ),
+                  )
+                : const LoginScreen(),
           );
         },
       ),
