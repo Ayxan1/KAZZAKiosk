@@ -38,6 +38,7 @@ exports.createSale = async (req, res) => {
 
         let totalAmount = 0;
         const saleItems = [];
+        const soldProductNames = [];
 
         // Process each item
         for (const item of items) {
@@ -85,6 +86,8 @@ exports.createSale = async (req, res) => {
                 subtotal
             });
 
+            soldProductNames.push(`${kioskProduct.product.name} (${quantity})`);
+
             // Decrease stock
             await kioskProduct.update({
                 stock_quantity: kioskProduct.stock_quantity - quantity
@@ -119,7 +122,8 @@ exports.createSale = async (req, res) => {
         await logActivity(
             req.user.user_id,
             'CREATE_SALE',
-            `${req.user.full_name} ${totalAmount.toFixed(2)} ₼ məbləğində satış etdi (${saleItems.length} məhsul, ${payment_method}).`
+            `${req.user.full_name} ${totalAmount.toFixed(2)} ₼ məbləğində satış etdi: ${soldProductNames.join(', ')} (${payment_method}).`,
+            kiosk_id
         );
 
         const result = await Sale.findByPk(sale.sale_id, {

@@ -250,7 +250,8 @@ exports.addProductToKiosk = async (req, res) => {
         await logActivity(
             req.user.user_id,
             'CREATE_PRODUCT',
-            `${req.user.full_name} "${name}" məhsulunu kioska əlavə etdi.`
+            `${req.user.full_name} "${name}" məhsulunu kioska əlavə etdi.`,
+            kioskId
         );
 
         const result = await KioskProduct.findByPk(kioskProduct.kiosk_product_id, {
@@ -414,7 +415,8 @@ exports.updateKioskProduct = async (req, res) => {
             await logActivity(
                 req.user.user_id,
                 'UPDATE_PRODUCT',
-                `${req.user.full_name} "${product.name}" məhsulunda dəyişiklik etdi: ${changes.join(', ')}.`
+                `${req.user.full_name} "${product.name}" məhsulunda dəyişiklik etdi: ${changes.join(', ')}.`,
+                kioskId
             );
         }
 
@@ -478,7 +480,8 @@ exports.deleteKioskProduct = async (req, res) => {
         await logActivity(
             req.user.user_id,
             'DELETE_PRODUCT',
-            `${req.user.full_name} "${productName}" məhsulunu kioskdan sildi.`
+            `${req.user.full_name} "${productName}" məhsulunu kioskdan sildi.`,
+            kioskId
         );
 
         res.json({

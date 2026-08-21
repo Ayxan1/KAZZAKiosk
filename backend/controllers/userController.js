@@ -91,7 +91,8 @@ exports.createUser = async (req, res) => {
         await logActivity(
             req.user.user_id,
             'CREATE_USER',
-            `${req.user.full_name} yeni istifadəçi yaratdı: ${full_name} (${username}, ${role}).`
+            `${req.user.full_name} yeni istifadəçi yaratdı: ${full_name} (${username}, ${role}).`,
+            role === 'seller' ? assigned_kiosk_id : null
         );
 
         res.status(201).json({
@@ -172,7 +173,8 @@ exports.updateUser = async (req, res) => {
         await logActivity(
             req.user.user_id,
             'UPDATE_USER',
-            `${req.user.full_name} istifadəçini yenilədi: ${full_name} (${username})${password ? ', şifrə sıfırlandı' : ''}.`
+            `${req.user.full_name} istifadəçini yenilədi: ${full_name} (${username})${password ? ', şifrə sıfırlandı' : ''}.`,
+            role === 'seller' ? assigned_kiosk_id : null
         );
 
         res.json({
@@ -211,7 +213,8 @@ exports.deleteUser = async (req, res) => {
         await logActivity(
             req.user.user_id,
             'DELETE_USER',
-            `${req.user.full_name} istifadəçini sildi: ${user.full_name} (${user.username}).`
+            `${req.user.full_name} istifadəçini sildi: ${user.full_name} (${user.username}).`,
+            user.assigned_kiosk_id
         );
 
         res.json({

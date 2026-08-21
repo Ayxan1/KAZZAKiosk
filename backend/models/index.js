@@ -88,6 +88,10 @@ ActivityLog.belongsTo(User, {
     foreignKey: 'user_id',
     as: 'user'
 });
+ActivityLog.belongsTo(Kiosk, {
+    foreignKey: 'kiosk_id',
+    as: 'kiosk'
+});
 
 module.exports = {
     Kiosk,

@@ -68,9 +68,12 @@ const startServer = async () => {
             console.log('✅ Database models synchronized');
         }
 
-        // Always ensure the activity_logs table exists (new, non-destructive:
-        // only creates this one table if missing, never touches existing ones).
-        await ActivityLog.sync();
+        // Always ensure the activity_logs table exists and has the latest
+        // columns (targeted single-model alter: only touches this table,
+        // never the rest of the schema, so it's safe to run unconditionally).
+        await ActivityLog.sync({
+            alter: true
+        });
 
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);

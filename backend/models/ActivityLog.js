@@ -23,6 +23,14 @@ const ActivityLog = sequelize.define('ActivityLog', {
             key: 'user_id'
         }
     },
+    kiosk_id: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+            model: 'kiosks',
+            key: 'kiosk_id'
+        }
+    },
     action_type: {
         type: DataTypes.ENUM(
             'LOGIN',

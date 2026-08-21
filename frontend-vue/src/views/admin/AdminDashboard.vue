@@ -358,11 +358,113 @@
         class="bg-white rounded-xl shadow-sm p-6"
       >
         <h2 class="text-xl font-semibold mb-4">Fəaliyyət Jurnalı</h2>
+
+        <div
+          class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4"
+        >
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Tarixdən</label>
+            <input
+              v-model="activityFilters.startDate"
+              type="date"
+              class="w-full px-3 py-2 border rounded-lg text-sm"
+            />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Tarixədək</label>
+            <input
+              v-model="activityFilters.endDate"
+              type="date"
+              class="w-full px-3 py-2 border rounded-lg text-sm"
+            />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Kiosk</label>
+            <select
+              v-model="activityFilters.kioskId"
+              class="w-full px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="">Hamısı</option>
+              <option
+                v-for="kiosk in kioskStore.kiosks"
+                :key="kiosk.kiosk_id"
+                :value="kiosk.kiosk_id"
+              >
+                {{ kiosk.kiosk_name }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">İstifadəçi</label>
+            <select
+              v-model="activityFilters.userId"
+              class="w-full px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="">Hamısı</option>
+              <option
+                v-for="user in userStore.users"
+                :key="user.user_id"
+                :value="user.user_id"
+              >
+                {{ user.full_name }} ({{ user.role }})
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Əməliyyat</label>
+            <select
+              v-model="activityFilters.action"
+              class="w-full px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="">Hamısı</option>
+              <option
+                v-for="(label, key) in actionLabels"
+                :key="key"
+                :value="key"
+              >
+                {{ label }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Məhsul</label>
+            <input
+              v-model="activityFilters.product"
+              list="activity-product-list"
+              type="text"
+              placeholder="Məhsul adı..."
+              class="w-full px-3 py-2 border rounded-lg text-sm"
+            />
+            <datalist id="activity-product-list">
+              <option
+                v-for="name in uniqueProductNames"
+                :key="name"
+                :value="name"
+              />
+            </datalist>
+          </div>
+        </div>
+
+        <div class="flex gap-2 mb-4">
+          <button
+            @click="applyActivityFilters"
+            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition"
+          >
+            Filtrlə
+          </button>
+          <button
+            @click="clearActivityFilters"
+            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm transition"
+          >
+            Təmizlə
+          </button>
+        </div>
+
         <div v-if="activityStore.loading" class="text-gray-600">
           Yüklənir...
         </div>
         <div v-else-if="activityStore.logs.length === 0" class="text-gray-600">
-          Hələ heç bir fəaliyyət qeydə alınmayıb.
+          Nəticə tapılmadı.
         </div>
         <div v-else class="overflow-x-auto">
           <table class="w-full text-sm text-left">
@@ -370,6 +472,7 @@
               <tr>
                 <th class="py-2 pr-4">Tarix</th>
                 <th class="py-2 pr-4">İstifadəçi</th>
+                <th class="py-2 pr-4">Kiosk</th>
                 <th class="py-2 pr-4">Əməliyyat</th>
                 <th class="py-2 pr-4">Təsvir</th>
               </tr>
@@ -388,6 +491,9 @@
                   <span v-if="log.user" class="text-gray-500"
                     >({{ log.user.username }})</span
                   >
+                </td>
+                <td class="py-2 pr-4">
+                  {{ log.kiosk?.kiosk_name || "-" }}
                 </td>
                 <td class="py-2 pr-4">
                   <span
@@ -575,7 +681,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "../../stores/auth";
 import { useKioskStore } from "../../stores/kiosk";
 import { useReportStore } from "../../stores/report";
@@ -614,6 +720,39 @@ const actionLabels = {
   UPDATE_USER: "İstifadəçi yeniləndi",
   DELETE_USER: "İstifadəçi silindi",
 };
+
+// --- Activity Log filters ---
+const activityFilters = ref({
+  startDate: "",
+  endDate: "",
+  kioskId: "",
+  userId: "",
+  action: "",
+  product: "",
+});
+
+const uniqueProductNames = computed(() => {
+  const names = new Set(
+    productStore.allProducts.map((p) => p.product_name).filter(Boolean),
+  );
+  return Array.from(names).sort();
+});
+
+function applyActivityFilters() {
+  activityStore.fetchLogs({ ...activityFilters.value });
+}
+
+function clearActivityFilters() {
+  activityFilters.value = {
+    startDate: "",
+    endDate: "",
+    kioskId: "",
+    userId: "",
+    action: "",
+    product: "",
+  };
+  activityStore.fetchLogs();
+}
 
 // --- Kiosks ---
 const showNewKioskForm = ref(false);

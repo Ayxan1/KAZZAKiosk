@@ -69,7 +69,8 @@ exports.login = async (req, res) => {
         await logActivity(
             user.user_id,
             'LOGIN',
-            `${user.full_name} (${user.username}) sistemə daxil oldu.`
+            `${user.full_name} (${user.username}) sistemə daxil oldu.`,
+            user.assigned_kiosk_id
         );
 
         // Return user data without password
@@ -132,7 +133,8 @@ exports.logout = async (req, res) => {
         await logActivity(
             req.user.user_id,
             'LOGOUT',
-            `${req.user.full_name} (${req.user.username}) sistemdən çıxdı.`
+            `${req.user.full_name} (${req.user.username}) sistemdən çıxdı.`,
+            req.user.assigned_kiosk_id
         );
 
         res.json({

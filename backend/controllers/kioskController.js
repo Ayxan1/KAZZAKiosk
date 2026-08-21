@@ -107,7 +107,8 @@ exports.createKiosk = async (req, res) => {
         await logActivity(
             req.user.user_id,
             'CREATE_KIOSK',
-            `${req.user.full_name} "${kiosk_name}" adlı kiosk yaratdı.`
+            `${req.user.full_name} "${kiosk_name}" adlı kiosk yaratdı.`,
+            kiosk.kiosk_id
         );
 
         res.status(201).json({
@@ -153,7 +154,8 @@ exports.updateKiosk = async (req, res) => {
         await logActivity(
             req.user.user_id,
             'UPDATE_KIOSK',
-            `${req.user.full_name} "${kiosk_name}" kioskunu yenilədi (aktiv: ${is_active ? 'bəli' : 'xeyr'}).`
+            `${req.user.full_name} "${kiosk_name}" kioskunu yenilədi (aktiv: ${is_active ? 'bəli' : 'xeyr'}).`,
+            kioskId
         );
 
         res.json({
