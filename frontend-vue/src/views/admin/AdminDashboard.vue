@@ -147,9 +147,13 @@
 
         <div v-if="reportStore.stats?.kioskStats?.length" class="mb-6">
           <h3 class="font-medium mb-2">Kiosklar üzrə bölgü</h3>
-          <div class="overflow-x-auto max-h-80 overflow-y-auto border border-gray-100 rounded-lg">
+          <div
+            class="overflow-x-auto max-h-80 overflow-y-auto border border-gray-100 rounded-lg"
+          >
             <table class="w-full text-sm text-left">
-              <thead class="text-gray-600 border-b border-gray-200 bg-gray-50 sticky top-0">
+              <thead
+                class="text-gray-600 border-b border-gray-200 bg-gray-50 sticky top-0"
+              >
                 <tr>
                   <th class="py-2 px-4">Kiosk</th>
                   <th class="py-2 px-4">Satış sayı</th>
@@ -175,9 +179,13 @@
 
         <div v-if="reportStore.salesReport.length">
           <h3 class="font-medium mb-2">Tarix üzrə bölgü</h3>
-          <div class="overflow-x-auto max-h-80 overflow-y-auto border border-gray-100 rounded-lg">
+          <div
+            class="overflow-x-auto max-h-80 overflow-y-auto border border-gray-100 rounded-lg"
+          >
             <table class="w-full text-sm text-left">
-              <thead class="text-gray-600 border-b border-gray-200 bg-gray-50 sticky top-0">
+              <thead
+                class="text-gray-600 border-b border-gray-200 bg-gray-50 sticky top-0"
+              >
                 <tr>
                   <th class="py-2 px-4">Dövr</th>
                   <th class="py-2 px-4">Satış sayı</th>
@@ -447,7 +455,9 @@
         </div>
         <div v-else class="overflow-x-auto max-h-[32rem] overflow-y-auto">
           <table class="w-full text-sm text-left">
-            <thead class="text-gray-600 border-b border-gray-200 bg-white sticky top-0">
+            <thead
+              class="text-gray-600 border-b border-gray-200 bg-white sticky top-0"
+            >
               <tr>
                 <th class="py-2 pr-4">Kiosk</th>
                 <th class="py-2 pr-4">Məhsul</th>
@@ -488,7 +498,9 @@
         </div>
         <div v-else class="overflow-x-auto max-h-[32rem] overflow-y-auto">
           <table class="w-full text-sm text-left">
-            <thead class="text-gray-600 border-b border-gray-200 bg-white sticky top-0">
+            <thead
+              class="text-gray-600 border-b border-gray-200 bg-white sticky top-0"
+            >
               <tr>
                 <th class="py-2 pr-4">Tarix</th>
                 <th class="py-2 pr-4">Kiosk</th>
@@ -630,7 +642,9 @@
         </div>
         <div v-else class="overflow-x-auto max-h-[32rem] overflow-y-auto">
           <table class="w-full text-sm text-left">
-            <thead class="text-gray-600 border-b border-gray-200 bg-white sticky top-0">
+            <thead
+              class="text-gray-600 border-b border-gray-200 bg-white sticky top-0"
+            >
               <tr>
                 <th class="py-2 pr-4">Tarix</th>
                 <th class="py-2 pr-4">İstifadəçi</th>
@@ -845,7 +859,9 @@
       v-if="showShiftHistoryModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
     >
-      <div class="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[85vh] flex flex-col">
+      <div
+        class="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[85vh] flex flex-col"
+      >
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-semibold">
             Növbə tarixçəsi · {{ shiftHistoryKioskName }}
@@ -878,7 +894,8 @@
               <div>
                 <p class="font-medium">{{ s.user?.full_name }}</p>
                 <p class="text-xs text-gray-500">
-                  Alındı: {{ new Date(s.taken_over_at).toLocaleString("az-AZ") }}
+                  Alındı:
+                  {{ new Date(s.taken_over_at).toLocaleString("az-AZ") }}
                   <template v-if="s.handed_over_at">
                     · Verildi:
                     {{ new Date(s.handed_over_at).toLocaleString("az-AZ") }}
@@ -919,7 +936,9 @@
       v-if="shiftStore.selectedShiftSales || shiftStore.selectedShiftLoading"
       class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4"
     >
-      <div class="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[85vh] flex flex-col">
+      <div
+        class="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[85vh] flex flex-col"
+      >
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-semibold">Növbənin satışları</h3>
           <button
@@ -1022,7 +1041,8 @@ const statsFilters = ref({
 function applyStatsFilters() {
   const params = {};
   if (statsFilters.value.kioskId) params.kioskId = statsFilters.value.kioskId;
-  if (statsFilters.value.startDate) params.startDate = statsFilters.value.startDate;
+  if (statsFilters.value.startDate)
+    params.startDate = statsFilters.value.startDate;
   if (statsFilters.value.endDate) params.endDate = statsFilters.value.endDate;
 
   reportStore.fetchDashboardStats(params);

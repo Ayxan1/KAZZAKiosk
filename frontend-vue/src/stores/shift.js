@@ -81,7 +81,9 @@ export const useShiftStore = defineStore('shift', () => {
         historyLoading.value = true
         try {
             const data = await apiClient.get('/shifts/history', {
-                params: kioskId ? { kioskId } : {}
+                params: kioskId ? {
+                    kioskId
+                } : {}
             })
             shiftHistory.value = data.shifts || []
         } catch (err) {
