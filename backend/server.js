@@ -6,7 +6,8 @@ const {
     sequelize
 } = require('./config/database');
 const {
-    ActivityLog
+    ActivityLog,
+    Shift
 } = require('./models');
 
 const app = express();
@@ -30,6 +31,7 @@ app.use('/api/sales', require('./routes/salesRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/activity-logs', require('./routes/activityRoutes'));
+app.use('/api/shifts', require('./routes/shiftRoutes'));
 app.use('/api/seed', require('./routes/seed')); // Seed endpoint
 
 // Health check
@@ -72,6 +74,11 @@ const startServer = async () => {
         // columns (targeted single-model alter: only touches this table,
         // never the rest of the schema, so it's safe to run unconditionally).
         await ActivityLog.sync({
+            alter: true
+        });
+
+        // Same for the new shifts table (təhvil al/ver tracking).
+        await Shift.sync({
             alter: true
         });
 

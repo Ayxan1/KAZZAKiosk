@@ -11,12 +11,20 @@
             Seller Panel - {{ authStore.user?.full_name }}
           </p>
         </div>
-        <button
-          @click="authStore.logout"
-          class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition"
-        >
-          Çıxış
-        </button>
+        <div class="flex gap-2">
+          <button
+            @click="openShiftModal"
+            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
+          >
+            Gündəlik
+          </button>
+          <button
+            @click="authStore.logout"
+            class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition"
+          >
+            Çıxış
+          </button>
+        </div>
       </div>
     </header>
 
@@ -93,6 +101,22 @@
         <!-- Cart -->
         <div class="bg-white rounded-xl shadow-sm p-6">
           <h2 class="text-xl font-semibold mb-4">Səbət</h2>
+
+          <div
+            v-if="!shiftStore.isOpen"
+            class="bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-lg p-3 mb-4 text-sm"
+          >
+            <p class="font-medium mb-2">
+              ⚠️ Növbəni təhvil almamısınız. Satış edə bilməzsiniz.
+            </p>
+            <button
+              @click="handleTakeOver"
+              class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition"
+            >
+              Təhvil Al
+            </button>
+          </div>
+
           <div class="space-y-3 mb-4">
             <div
               v-for="item in salesStore.cart"
@@ -166,7 +190,7 @@
 
             <button
               @click="completeSale"
-              :disabled="salesStore.cart.length === 0"
+              :disabled="salesStore.cart.length === 0 || !shiftStore.isOpen"
               class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50"
             >
               Satışı Tamamla
@@ -311,6 +335,100 @@
         </form>
       </div>
     </div>
+
+    <!-- Shift (Gündəlik) Modal -->
+    <div
+      v-if="showShiftModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+    >
+      <div class="bg-white rounded-xl p-6 max-w-md w-full">
+        <h3 class="text-xl font-semibold mb-4">Gündəlik</h3>
+
+        <div v-if="shiftStore.loading" class="text-gray-600 text-sm mb-4">
+          Yüklənir...
+        </div>
+
+        <template v-else>
+          <p class="text-sm text-gray-600 mb-1">
+            Növbə statusu:
+            <span
+              :class="
+                shiftStore.isOpen
+                  ? 'text-green-600 font-semibold'
+                  : 'text-red-600 font-semibold'
+              "
+              >{{ shiftStore.isOpen ? "Açıq" : "Bağlı" }}</span
+            >
+          </p>
+          <p v-if="shiftStore.shift" class="text-xs text-gray-500 mb-4">
+            Təhvil alındı:
+            {{
+              new Date(shiftStore.shift.taken_over_at).toLocaleString("az-AZ")
+            }}
+            <template v-if="shiftStore.shift.handed_over_at">
+              · Təhvil verildi:
+              {{
+                new Date(shiftStore.shift.handed_over_at).toLocaleString(
+                  "az-AZ",
+                )
+              }}
+            </template>
+          </p>
+
+          <div class="bg-gray-50 rounded-lg p-4 mb-4 space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Satış sayı:</span>
+              <span class="font-medium">{{
+                shiftStore.summary.salesCount
+              }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Satış cəmi:</span>
+              <span class="font-medium"
+                >{{ shiftStore.summary.totalAmount.toFixed(2) }} ₼</span
+              >
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Mənfəət:</span>
+              <span class="font-medium"
+                >{{ shiftStore.summary.profit.toFixed(2) }} ₼</span
+              >
+            </div>
+          </div>
+
+          <p
+            v-if="shiftStore.error"
+            class="text-red-600 text-sm mb-3 font-medium"
+          >
+            {{ shiftStore.error }}
+          </p>
+
+          <div class="flex gap-2">
+            <button
+              @click="handleTakeOver"
+              :disabled="shiftStore.isOpen"
+              class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition disabled:opacity-50"
+            >
+              Təhvil Al
+            </button>
+            <button
+              @click="handleHandOver"
+              :disabled="!shiftStore.isOpen"
+              class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg transition disabled:opacity-50"
+            >
+              Təhvil Ver
+            </button>
+          </div>
+        </template>
+
+        <button
+          @click="showShiftModal = false"
+          class="w-full mt-3 bg-gray-200 hover:bg-gray-300 py-2 rounded-lg transition"
+        >
+          Bağla
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -319,10 +437,14 @@ import { ref, computed, onMounted, nextTick } from "vue";
 import { useAuthStore } from "../../stores/auth";
 import { useProductStore } from "../../stores/product";
 import { useSalesStore } from "../../stores/sales";
+import { useShiftStore } from "../../stores/shift";
 
 const authStore = useAuthStore();
 const productStore = useProductStore();
 const salesStore = useSalesStore();
+const shiftStore = useShiftStore();
+
+const showShiftModal = ref(false);
 
 const activeTab = ref("sales");
 const searchQuery = ref("");
@@ -394,15 +516,38 @@ onMounted(() => {
     productStore.fetchProducts(kioskId);
     salesStore.fetchHistory(kioskId);
   }
+  shiftStore.fetchSummary();
   focusBarcodeInput();
 });
 
+function openShiftModal() {
+  showShiftModal.value = true;
+  shiftStore.fetchSummary();
+}
+
+async function handleTakeOver() {
+  await shiftStore.takeOver();
+}
+
+async function handleHandOver() {
+  await shiftStore.handOver();
+}
+
 async function completeSale() {
+  if (!shiftStore.isOpen) {
+    alert("Növbəni təhvil almadan satış edə bilməzsiniz.");
+    return;
+  }
+
   const kioskId = authStore.user?.assigned_kiosk_id;
   const success = await salesStore.completeSale(kioskId, paymentMethod.value);
   if (success) {
     alert("Satış uğurla tamamlandı!");
     productStore.fetchProducts(kioskId);
+  } else {
+    // Shift may have been handed over from elsewhere (or expired) between
+    // page load and checkout - refresh status so the warning/button show up.
+    shiftStore.fetchSummary();
   }
 }
 

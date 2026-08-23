@@ -118,6 +118,22 @@
               <div>
                 <h3 class="font-medium">{{ kiosk.kiosk_name }}</h3>
                 <p class="text-sm text-gray-600">{{ kiosk.kiosk_id }}</p>
+                <p class="text-sm mt-1">
+                  <span
+                    v-if="activeShiftsByKiosk[kiosk.kiosk_id]?.length"
+                    class="text-green-700"
+                  >
+                    Növbə açıq:
+                    {{
+                      activeShiftsByKiosk[kiosk.kiosk_id]
+                        .map((s) => s.user?.full_name)
+                        .join(", ")
+                    }}
+                  </span>
+                  <span v-else class="text-gray-400"
+                    >Növbə bağlıdır (heç kim təhvil almayıb)</span
+                  >
+                </p>
               </div>
               <div class="flex items-center gap-3">
                 <span
@@ -686,6 +702,7 @@ import { useReportStore } from "../../stores/report";
 import { useUserStore } from "../../stores/user";
 import { useProductStore } from "../../stores/product";
 import { useActivityStore } from "../../stores/activity";
+import { useShiftStore } from "../../stores/shift";
 
 const authStore = useAuthStore();
 const kioskStore = useKioskStore();
@@ -693,6 +710,7 @@ const reportStore = useReportStore();
 const userStore = useUserStore();
 const productStore = useProductStore();
 const activityStore = useActivityStore();
+const shiftStore = useShiftStore();
 
 const activeTab = ref("dashboard");
 
@@ -717,6 +735,8 @@ const actionLabels = {
   CREATE_USER: "İstifadəçi yaradıldı",
   UPDATE_USER: "İstifadəçi yeniləndi",
   DELETE_USER: "İstifadəçi silindi",
+  SHIFT_TAKEOVER: "Növbə təhvil alındı",
+  SHIFT_HANDOVER: "Növbə təhvil verildi",
 };
 
 // --- Activity Log filters ---
@@ -758,6 +778,15 @@ const newKioskName = ref("");
 const editingKioskId = ref(null);
 const editKioskName = ref("");
 const editKioskActive = ref(true);
+
+const activeShiftsByKiosk = computed(() => {
+  const map = {};
+  for (const s of shiftStore.activeShifts) {
+    if (!map[s.kiosk_id]) map[s.kiosk_id] = [];
+    map[s.kiosk_id].push(s);
+  }
+  return map;
+});
 
 async function handleCreateKiosk() {
   const ok = await kioskStore.createKiosk(newKioskName.value.trim());
@@ -887,5 +916,6 @@ onMounted(() => {
   userStore.fetchUsers();
   loadAllProducts();
   activityStore.fetchLogs();
+  shiftStore.fetchActiveShifts();
 });
 </script>

@@ -43,7 +43,9 @@ const ActivityLog = sequelize.define('ActivityLog', {
             'UPDATE_KIOSK',
             'CREATE_USER',
             'UPDATE_USER',
-            'DELETE_USER'
+            'DELETE_USER',
+            'SHIFT_TAKEOVER',
+            'SHIFT_HANDOVER'
         ),
         allowNull: false
     },

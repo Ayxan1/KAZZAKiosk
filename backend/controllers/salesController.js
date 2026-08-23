@@ -15,6 +15,9 @@ const {
 const {
     logActivity
 } = require('../utils/activityLogger');
+const {
+    hasOpenShift
+} = require('./shiftController');
 
 // Create a new sale
 exports.createSale = async (req, res) => {
@@ -33,6 +36,18 @@ exports.createSale = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'Kiosk, məhsullar və ödəniş üsulu tələb olunur.'
+            });
+        }
+
+        // Sellers must have an open shift (təhvil alınmış növbə) to sell.
+        // Enforced server-side so the check can't be bypassed by calling the
+        // API directly.
+        if (req.user.role === 'seller' && !(await hasOpenShift(req.user.user_id))) {
+            await transaction.rollback();
+            return res.status(403).json({
+                success: false,
+                code: 'NO_ACTIVE_SHIFT',
+                message: 'Satış etmək üçün əvvəlcə növbəni təhvil almalısınız.'
             });
         }
 

@@ -6,6 +6,7 @@ const ProductHistory = require('./ProductHistory');
 const Sale = require('./Sale');
 const SaleItem = require('./SaleItem');
 const ActivityLog = require('./ActivityLog');
+const Shift = require('./Shift');
 
 // Associations
 
@@ -93,6 +94,24 @@ ActivityLog.belongsTo(Kiosk, {
     as: 'kiosk'
 });
 
+// Shift - User & Kiosk
+Shift.belongsTo(User, {
+    foreignKey: 'user_id',
+    as: 'user'
+});
+Shift.belongsTo(Kiosk, {
+    foreignKey: 'kiosk_id',
+    as: 'kiosk'
+});
+User.hasMany(Shift, {
+    foreignKey: 'user_id',
+    as: 'shifts'
+});
+Kiosk.hasMany(Shift, {
+    foreignKey: 'kiosk_id',
+    as: 'shifts'
+});
+
 module.exports = {
     Kiosk,
     User,
@@ -101,5 +120,6 @@ module.exports = {
     ProductHistory,
     Sale,
     SaleItem,
-    ActivityLog
+    ActivityLog,
+    Shift
 };
