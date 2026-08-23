@@ -19,6 +19,12 @@ export const useShiftStore = defineStore('shift', () => {
 
     // Admin only - who currently holds each kiosk
     const activeShifts = ref([])
+    // Admin only - full shift history (open + closed), optionally per kiosk
+    const shiftHistory = ref([])
+    const historyLoading = ref(false)
+    // Admin only - sales drill-down for a selected shift
+    const selectedShiftSales = ref(null)
+    const selectedShiftLoading = ref(false)
 
     async function fetchSummary() {
         loading.value = true
@@ -70,6 +76,39 @@ export const useShiftStore = defineStore('shift', () => {
         }
     }
 
+    // Admin only
+    async function fetchShiftHistory(kioskId = '') {
+        historyLoading.value = true
+        try {
+            const data = await apiClient.get('/shifts/history', {
+                params: kioskId ? { kioskId } : {}
+            })
+            shiftHistory.value = data.shifts || []
+        } catch (err) {
+            console.error('Növbə tarixçəsi yüklənə bilmədi:', err)
+        } finally {
+            historyLoading.value = false
+        }
+    }
+
+    // Admin only
+    async function fetchShiftSales(shiftId) {
+        selectedShiftLoading.value = true
+        try {
+            const data = await apiClient.get(`/shifts/${shiftId}/sales`)
+            selectedShiftSales.value = data
+        } catch (err) {
+            console.error('Növbənin satışları yüklənə bilmədi:', err)
+            selectedShiftSales.value = null
+        } finally {
+            selectedShiftLoading.value = false
+        }
+    }
+
+    function clearSelectedShiftSales() {
+        selectedShiftSales.value = null
+    }
+
     return {
         isOpen,
         shift,
@@ -77,9 +116,16 @@ export const useShiftStore = defineStore('shift', () => {
         loading,
         error,
         activeShifts,
+        shiftHistory,
+        historyLoading,
+        selectedShiftSales,
+        selectedShiftLoading,
         fetchSummary,
         takeOver,
         handOver,
-        fetchActiveShifts
+        fetchActiveShifts,
+        fetchShiftHistory,
+        fetchShiftSales,
+        clearSelectedShiftSales
     }
 })

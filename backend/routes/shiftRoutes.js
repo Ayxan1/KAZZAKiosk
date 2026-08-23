@@ -14,4 +14,8 @@ router.post('/hand-over', authenticate, shiftController.handOverShift);
 // Admin: see who currently holds each kiosk
 router.get('/active', authenticate, isAdmin, shiftController.getActiveShifts);
 
+// Admin: shift history (per kiosk or all) + drill-down into a shift's sales
+router.get('/history', authenticate, isAdmin, shiftController.getShiftHistory);
+router.get('/:shiftId/sales', authenticate, isAdmin, shiftController.getShiftSales);
+
 module.exports = router;

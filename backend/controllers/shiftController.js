@@ -1,6 +1,8 @@
 const {
     Shift,
     Sale,
+    SaleItem,
+    Product,
     User,
     Kiosk
 } = require('../models');
@@ -203,6 +205,140 @@ exports.getActiveShifts = async (req, res) => {
         });
     } catch (error) {
         console.error('Get active shifts error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server xətası.',
+            error: error.message
+        });
+    }
+};
+
+// GET /api/shifts/history (Admin only) - all shifts (open + closed),
+// optionally filtered by kiosk, newest first, each with its own sales
+// summary so the admin can review who handed over what and when.
+exports.getShiftHistory = async (req, res) => {
+    try {
+        const {
+            kioskId
+        } = req.query;
+
+        const whereClause = {};
+        if (kioskId) whereClause.kiosk_id = kioskId;
+
+        const shifts = await Shift.findAll({
+            where: whereClause,
+            include: [{
+                    model: User,
+                    as: 'user',
+                    attributes: ['user_id', 'username', 'full_name']
+                },
+                {
+                    model: Kiosk,
+                    as: 'kiosk',
+                    attributes: ['kiosk_id', 'kiosk_name']
+                }
+            ],
+            order: [
+                ['taken_over_at', 'DESC']
+            ],
+            limit: 200
+        });
+
+        const shiftsWithSummary = await Promise.all(shifts.map(async (shift) => {
+            const periodStart = shift.taken_over_at;
+            const periodEnd = shift.handed_over_at || new Date();
+
+            const sales = await Sale.findAll({
+                where: {
+                    seller_id: shift.user_id,
+                    kiosk_id: shift.kiosk_id,
+                    sale_date: {
+                        [Op.gte]: periodStart,
+                        [Op.lte]: periodEnd
+                    }
+                },
+                attributes: ['total_amount']
+            });
+
+            const totalAmount = sales.reduce((sum, s) => sum + parseFloat(s.total_amount), 0);
+
+            return {
+                ...shift.toJSON(),
+                summary: {
+                    salesCount: sales.length,
+                    totalAmount
+                }
+            };
+        }));
+
+        res.json({
+            success: true,
+            count: shiftsWithSummary.length,
+            shifts: shiftsWithSummary
+        });
+    } catch (error) {
+        console.error('Get shift history error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server xətası.',
+            error: error.message
+        });
+    }
+};
+
+// GET /api/shifts/:shiftId/sales (Admin only) - full list of sales made
+// during a specific shift's window, for drill-down review.
+exports.getShiftSales = async (req, res) => {
+    try {
+        const {
+            shiftId
+        } = req.params;
+
+        const shift = await Shift.findByPk(shiftId);
+        if (!shift) {
+            return res.status(404).json({
+                success: false,
+                message: 'Növbə tapılmadı.'
+            });
+        }
+
+        const periodStart = shift.taken_over_at;
+        const periodEnd = shift.handed_over_at || new Date();
+
+        const sales = await Sale.findAll({
+            where: {
+                seller_id: shift.user_id,
+                kiosk_id: shift.kiosk_id,
+                sale_date: {
+                    [Op.gte]: periodStart,
+                    [Op.lte]: periodEnd
+                }
+            },
+            include: [{
+                model: SaleItem,
+                as: 'items',
+                include: [{
+                    model: Product,
+                    as: 'product',
+                    attributes: ['product_id', 'name']
+                }]
+            }],
+            order: [
+                ['sale_date', 'DESC']
+            ]
+        });
+
+        const totalAmount = sales.reduce((sum, s) => sum + parseFloat(s.total_amount), 0);
+
+        res.json({
+            success: true,
+            shift,
+            count: sales.length,
+            totalAmount,
+            sales
+        });
+    } catch (error) {
+        console.error('Get shift sales error:', error);
         res.status(500).json({
             success: false,
             message: 'Server xətası.',

@@ -9,6 +9,7 @@ import apiClient from '../api/client'
 export const useReportStore = defineStore('report', () => {
     const stats = ref(null)
     const productHistory = ref([])
+    const salesReport = ref([])
     const loading = ref(false)
     const error = ref(null)
 
@@ -44,12 +45,30 @@ export const useReportStore = defineStore('report', () => {
         }
     }
 
+    async function fetchSalesReport(params = {}) {
+        loading.value = true
+        error.value = null
+        try {
+            const data = await apiClient.get('/reports/sales', {
+                params
+            })
+            salesReport.value = data.report
+        } catch (err) {
+            error.value = err.message || 'Statistika yüklənə bilmədi'
+            console.error('Statistika yüklənə bilmədi:', err)
+        } finally {
+            loading.value = false
+        }
+    }
+
     return {
         stats,
         productHistory,
+        salesReport,
         loading,
         error,
         fetchDashboardStats,
-        fetchProductHistory
+        fetchProductHistory,
+        fetchSalesReport
     }
 })

@@ -70,6 +70,148 @@
         </div>
       </div>
 
+      <!-- Statistics Tab -->
+      <div
+        v-else-if="activeTab === 'statistics'"
+        class="bg-white rounded-xl shadow-sm p-6"
+      >
+        <h2 class="text-xl font-semibold mb-4">Statistika</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Kiosk</label>
+            <select
+              v-model="statsFilters.kioskId"
+              class="w-full px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="">Bütün kiosklar</option>
+              <option
+                v-for="kiosk in kioskStore.kiosks"
+                :key="kiosk.kiosk_id"
+                :value="kiosk.kiosk_id"
+              >
+                {{ kiosk.kiosk_name }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Tarixdən</label>
+            <input
+              v-model="statsFilters.startDate"
+              type="date"
+              class="w-full px-3 py-2 border rounded-lg text-sm"
+            />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Tarixədək</label>
+            <input
+              v-model="statsFilters.endDate"
+              type="date"
+              class="w-full px-3 py-2 border rounded-lg text-sm"
+            />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Qruplaşdır</label>
+            <select
+              v-model="statsFilters.groupBy"
+              class="w-full px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="day">Gün</option>
+              <option value="week">Həftə</option>
+              <option value="month">Ay</option>
+            </select>
+          </div>
+        </div>
+
+        <button
+          @click="applyStatsFilters"
+          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition mb-6"
+        >
+          Göstər
+        </button>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="text-2xl font-bold text-purple-600">
+              {{ reportStore.stats?.totalSales ?? 0 }}
+            </div>
+            <div class="text-gray-600 text-sm">Satış sayı</div>
+          </div>
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="text-2xl font-bold text-green-600">
+              {{ (reportStore.stats?.totalRevenue ?? 0).toFixed(2) }} ₼
+            </div>
+            <div class="text-gray-600 text-sm">Ümumi gəlir</div>
+          </div>
+        </div>
+
+        <div v-if="reportStore.stats?.kioskStats?.length" class="mb-6">
+          <h3 class="font-medium mb-2">Kiosklar üzrə bölgü</h3>
+          <div class="overflow-x-auto max-h-80 overflow-y-auto border border-gray-100 rounded-lg">
+            <table class="w-full text-sm text-left">
+              <thead class="text-gray-600 border-b border-gray-200 bg-gray-50 sticky top-0">
+                <tr>
+                  <th class="py-2 px-4">Kiosk</th>
+                  <th class="py-2 px-4">Satış sayı</th>
+                  <th class="py-2 px-4">Cəmi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="row in reportStore.stats.kioskStats"
+                  :key="row.kiosk_id"
+                  class="border-b border-gray-100"
+                >
+                  <td class="py-2 px-4">{{ row.kiosk?.kiosk_name }}</td>
+                  <td class="py-2 px-4">{{ row.total_sales }}</td>
+                  <td class="py-2 px-4">
+                    {{ parseFloat(row.total_revenue).toFixed(2) }} ₼
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div v-if="reportStore.salesReport.length">
+          <h3 class="font-medium mb-2">Tarix üzrə bölgü</h3>
+          <div class="overflow-x-auto max-h-80 overflow-y-auto border border-gray-100 rounded-lg">
+            <table class="w-full text-sm text-left">
+              <thead class="text-gray-600 border-b border-gray-200 bg-gray-50 sticky top-0">
+                <tr>
+                  <th class="py-2 px-4">Dövr</th>
+                  <th class="py-2 px-4">Satış sayı</th>
+                  <th class="py-2 px-4">Cəmi</th>
+                  <th class="py-2 px-4">Orta</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="row in reportStore.salesReport"
+                  :key="row.period"
+                  class="border-b border-gray-100"
+                >
+                  <td class="py-2 px-4 whitespace-nowrap">
+                    {{ new Date(row.period).toLocaleDateString("az-AZ") }}
+                  </td>
+                  <td class="py-2 px-4">{{ row.total_sales }}</td>
+                  <td class="py-2 px-4">
+                    {{ parseFloat(row.total_revenue).toFixed(2) }} ₼
+                  </td>
+                  <td class="py-2 px-4">
+                    {{ parseFloat(row.avg_sale).toFixed(2) }} ₼
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p v-else class="text-gray-500 text-sm">
+          Tarix üzrə bölgünü görmək üçün tarix aralığı seçib "Göstər" düyməsini
+          basın.
+        </p>
+      </div>
+
       <!-- Kiosks Tab -->
       <div
         v-else-if="activeTab === 'kiosks'"
@@ -105,7 +247,7 @@
           </button>
         </form>
 
-        <div class="space-y-2">
+        <div class="space-y-2 max-h-[32rem] overflow-y-auto pr-1">
           <div
             v-for="kiosk in kioskStore.kiosks"
             :key="kiosk.kiosk_id"
@@ -146,6 +288,12 @@
                 >
                   {{ kiosk.is_active ? "Aktiv" : "Deaktiv" }}
                 </span>
+                <button
+                  @click="openShiftHistory(kiosk)"
+                  class="px-3 py-1 text-sm bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition"
+                >
+                  Növbə tarixçəsi
+                </button>
                 <button
                   @click="startEditKiosk(kiosk)"
                   class="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition"
@@ -297,9 +445,9 @@
         >
           Məhsul tapılmadı.
         </div>
-        <div v-else class="overflow-x-auto">
+        <div v-else class="overflow-x-auto max-h-[32rem] overflow-y-auto">
           <table class="w-full text-sm text-left">
-            <thead class="text-gray-600 border-b border-gray-200">
+            <thead class="text-gray-600 border-b border-gray-200 bg-white sticky top-0">
               <tr>
                 <th class="py-2 pr-4">Kiosk</th>
                 <th class="py-2 pr-4">Məhsul</th>
@@ -338,9 +486,9 @@
         >
           Hələ heç bir dəyişiklik qeydə alınmayıb.
         </div>
-        <div v-else class="overflow-x-auto">
+        <div v-else class="overflow-x-auto max-h-[32rem] overflow-y-auto">
           <table class="w-full text-sm text-left">
-            <thead class="text-gray-600 border-b border-gray-200">
+            <thead class="text-gray-600 border-b border-gray-200 bg-white sticky top-0">
               <tr>
                 <th class="py-2 pr-4">Tarix</th>
                 <th class="py-2 pr-4">Kiosk</th>
@@ -480,9 +628,9 @@
         <div v-else-if="activityStore.logs.length === 0" class="text-gray-600">
           Nəticə tapılmadı.
         </div>
-        <div v-else class="overflow-x-auto">
+        <div v-else class="overflow-x-auto max-h-[32rem] overflow-y-auto">
           <table class="w-full text-sm text-left">
-            <thead class="text-gray-600 border-b border-gray-200">
+            <thead class="text-gray-600 border-b border-gray-200 bg-white sticky top-0">
               <tr>
                 <th class="py-2 pr-4">Tarix</th>
                 <th class="py-2 pr-4">İstifadəçi</th>
@@ -595,7 +743,7 @@
         </form>
 
         <div v-if="userStore.loading" class="text-gray-600">Yüklənir...</div>
-        <div v-else class="space-y-2">
+        <div v-else class="space-y-2 max-h-[32rem] overflow-y-auto pr-1">
           <div
             v-for="user in userStore.users"
             :key="user.user_id"
@@ -691,6 +839,145 @@
         </div>
       </div>
     </div>
+
+    <!-- Shift History Modal -->
+    <div
+      v-if="showShiftHistoryModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+    >
+      <div class="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[85vh] flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-semibold">
+            Növbə tarixçəsi · {{ shiftHistoryKioskName }}
+          </h3>
+          <button
+            @click="closeShiftHistory"
+            class="text-gray-500 hover:text-gray-700 text-xl leading-none"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div v-if="shiftStore.historyLoading" class="text-gray-600">
+          Yüklənir...
+        </div>
+        <div
+          v-else-if="shiftStore.shiftHistory.length === 0"
+          class="text-gray-600"
+        >
+          Bu kiosk üçün növbə qeydi tapılmadı.
+        </div>
+        <div v-else class="overflow-y-auto flex-1 space-y-2">
+          <div
+            v-for="s in shiftStore.shiftHistory"
+            :key="s.shift_id"
+            class="p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-indigo-50"
+            @click="viewShiftSales(s)"
+          >
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="font-medium">{{ s.user?.full_name }}</p>
+                <p class="text-xs text-gray-500">
+                  Alındı: {{ new Date(s.taken_over_at).toLocaleString("az-AZ") }}
+                  <template v-if="s.handed_over_at">
+                    · Verildi:
+                    {{ new Date(s.handed_over_at).toLocaleString("az-AZ") }}
+                  </template>
+                </p>
+              </div>
+              <div class="text-right">
+                <span
+                  :class="[
+                    'px-2 py-1 rounded-full text-xs',
+                    s.handed_over_at
+                      ? 'bg-gray-100 text-gray-600'
+                      : 'bg-green-100 text-green-700',
+                  ]"
+                >
+                  {{ s.handed_over_at ? "Bağlı" : "Açıq" }}
+                </span>
+                <p class="text-sm font-semibold text-indigo-600 mt-1">
+                  {{ s.summary.salesCount }} satış ·
+                  {{ s.summary.totalAmount.toFixed(2) }} ₼
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button
+          @click="closeShiftHistory"
+          class="w-full mt-4 bg-gray-200 hover:bg-gray-300 py-2 rounded-lg transition"
+        >
+          Bağla
+        </button>
+      </div>
+    </div>
+
+    <!-- Shift Sales Drilldown Modal -->
+    <div
+      v-if="shiftStore.selectedShiftSales || shiftStore.selectedShiftLoading"
+      class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4"
+    >
+      <div class="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[85vh] flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-semibold">Növbənin satışları</h3>
+          <button
+            @click="shiftStore.clearSelectedShiftSales()"
+            class="text-gray-500 hover:text-gray-700 text-xl leading-none"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div v-if="shiftStore.selectedShiftLoading" class="text-gray-600">
+          Yüklənir...
+        </div>
+        <template v-else-if="shiftStore.selectedShiftSales">
+          <p class="text-sm text-gray-600 mb-3">
+            {{ shiftStore.selectedShiftSales.count }} satış ·
+            {{ shiftStore.selectedShiftSales.totalAmount.toFixed(2) }} ₼
+          </p>
+          <div
+            v-if="shiftStore.selectedShiftSales.sales.length === 0"
+            class="text-gray-600"
+          >
+            Bu növbədə satış edilməyib.
+          </div>
+          <div v-else class="overflow-y-auto flex-1 space-y-2">
+            <div
+              v-for="sale in shiftStore.selectedShiftSales.sales"
+              :key="sale.sale_id"
+              class="p-3 border border-gray-200 rounded-lg"
+            >
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-sm text-gray-600">{{
+                  new Date(sale.sale_date).toLocaleString("az-AZ")
+                }}</span>
+                <span class="font-semibold text-indigo-600"
+                  >{{ parseFloat(sale.total_amount).toFixed(2) }} ₼ ({{
+                    sale.payment_method === "CASH" ? "Nağd" : "Kart"
+                  }})</span
+                >
+              </div>
+              <ul class="text-sm text-gray-700 list-disc list-inside">
+                <li v-for="item in sale.items" :key="item.sale_item_id">
+                  {{ item.product?.name }} × {{ item.quantity }} =
+                  {{ parseFloat(item.subtotal).toFixed(2) }} ₼
+                </li>
+              </ul>
+            </div>
+          </div>
+        </template>
+
+        <button
+          @click="shiftStore.clearSelectedShiftSales()"
+          class="w-full mt-4 bg-gray-200 hover:bg-gray-300 py-2 rounded-lg transition"
+        >
+          Bağla
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -716,12 +1003,37 @@ const activeTab = ref("dashboard");
 
 const tabs = [
   { id: "dashboard", label: "Dashboard" },
+  { id: "statistics", label: "Statistika" },
   { id: "kiosks", label: "Kiosklar" },
   { id: "products", label: "Məhsullar" },
   { id: "history", label: "Məhsul Tarixçəsi" },
   { id: "users", label: "İstifadəçilər" },
   { id: "activity", label: "Fəaliyyət Jurnalı" },
 ];
+
+// --- Statistics ---
+const statsFilters = ref({
+  kioskId: "",
+  startDate: "",
+  endDate: "",
+  groupBy: "day",
+});
+
+function applyStatsFilters() {
+  const params = {};
+  if (statsFilters.value.kioskId) params.kioskId = statsFilters.value.kioskId;
+  if (statsFilters.value.startDate) params.startDate = statsFilters.value.startDate;
+  if (statsFilters.value.endDate) params.endDate = statsFilters.value.endDate;
+
+  reportStore.fetchDashboardStats(params);
+
+  if (statsFilters.value.startDate && statsFilters.value.endDate) {
+    reportStore.fetchSalesReport({
+      ...params,
+      groupBy: statsFilters.value.groupBy,
+    });
+  }
+}
 
 const actionLabels = {
   LOGIN: "Giriş",
@@ -787,6 +1099,24 @@ const activeShiftsByKiosk = computed(() => {
   }
   return map;
 });
+
+const showShiftHistoryModal = ref(false);
+const shiftHistoryKioskName = ref("");
+
+function openShiftHistory(kiosk) {
+  shiftHistoryKioskName.value = kiosk.kiosk_name;
+  showShiftHistoryModal.value = true;
+  shiftStore.fetchShiftHistory(kiosk.kiosk_id);
+}
+
+function closeShiftHistory() {
+  showShiftHistoryModal.value = false;
+  shiftStore.clearSelectedShiftSales();
+}
+
+function viewShiftSales(shift) {
+  shiftStore.fetchShiftSales(shift.shift_id);
+}
 
 async function handleCreateKiosk() {
   const ok = await kioskStore.createKiosk(newKioskName.value.trim());
