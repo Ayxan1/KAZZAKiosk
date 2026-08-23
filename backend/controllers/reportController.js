@@ -63,7 +63,6 @@ exports.getDashboardStats = async (req, res) => {
         // Top selling products
         const topProducts = await SaleItem.findAll({
             attributes: [
-                'product_id',
                 [sequelize.fn('SUM', sequelize.col('quantity')), 'total_quantity'],
                 [sequelize.fn('SUM', sequelize.col('subtotal')), 'total_revenue']
             ],
@@ -79,7 +78,7 @@ exports.getDashboardStats = async (req, res) => {
                     attributes: ['product_id', 'name', 'product_code']
                 }
             ],
-            group: ['product_id', 'product.product_id', 'product.name', 'product.product_code'],
+            group: ['product.product_id', 'product.name', 'product.product_code'],
             order: [
                 [sequelize.fn('SUM', sequelize.col('quantity')), 'DESC']
             ],
