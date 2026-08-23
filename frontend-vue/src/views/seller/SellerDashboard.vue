@@ -37,6 +37,7 @@
           <input
             ref="barcodeInputEl"
             v-model="barcodeInput"
+            autofocus
             @keyup.enter="handleBarcodeScan"
             type="text"
             placeholder="Barkodu skan edin (avtomatik səbətə əlavə olunur)..."
@@ -56,6 +57,7 @@
             type="text"
             placeholder="Məhsul axtar..."
             class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
+            @blur="focusBarcodeInput"
           />
           <p v-if="!searchQuery" class="text-sm text-gray-500 py-8 text-center">
             Məhsul axtarmaq üçün yuxarıdakı sahəyə yazın və ya barkod skan edin.
@@ -64,7 +66,7 @@
             <div
               v-for="product in filteredProducts"
               :key="product.product_id"
-              @click="salesStore.addToCart(product)"
+              @click="addProductToCart(product)"
               class="p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 cursor-pointer transition"
             >
               <div class="flex justify-between">
@@ -131,10 +133,7 @@
                 <div class="flex items-center gap-3 mt-2">
                   <button
                     @click="
-                      salesStore.updateQuantity(
-                        item.product_id,
-                        item.quantity - 1,
-                      )
+                      changeCartQuantity(item.product_id, item.quantity - 1)
                     "
                     class="w-9 h-9 flex items-center justify-center text-lg font-bold bg-gray-200 hover:bg-gray-300 active:scale-95 rounded-lg transition"
                   >
@@ -145,10 +144,7 @@
                   }}</span>
                   <button
                     @click="
-                      salesStore.updateQuantity(
-                        item.product_id,
-                        item.quantity + 1,
-                      )
+                      changeCartQuantity(item.product_id, item.quantity + 1)
                     "
                     class="w-9 h-9 flex items-center justify-center text-lg font-bold bg-gray-200 hover:bg-gray-300 active:scale-95 rounded-lg transition"
                   >
@@ -182,6 +178,7 @@
             <select
               v-model="paymentMethod"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
+              @change="focusBarcodeInput({ force: true })"
             >
               <option value="CASH">Nağd</option>
               <option value="CARD">Kart</option>
@@ -313,7 +310,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useAuthStore } from "../../stores/auth";
 import { useProductStore } from "../../stores/product";
 import { useSalesStore } from "../../stores/sales";
@@ -343,8 +340,29 @@ const filteredProducts = computed(() => {
   );
 });
 
-function focusBarcodeInput() {
-  nextTick(() => barcodeInputEl.value?.focus());
+function isOtherEditableFocused() {
+  const active = document.activeElement;
+  if (!active || active === barcodeInputEl.value) return false;
+  if (active.tagName === "SELECT") return true;
+  if (active.tagName === "TEXTAREA") return true;
+  return active.tagName === "INPUT" && active !== barcodeInputEl.value;
+}
+
+function focusBarcodeInput({ force = false } = {}) {
+  nextTick(() => {
+    if (!force && isOtherEditableFocused()) return;
+    barcodeInputEl.value?.focus({ preventScroll: true });
+  });
+}
+
+function onWindowFocus() {
+  focusBarcodeInput();
+}
+
+function onVisibilityChange() {
+  if (document.visibilityState === "visible") {
+    focusBarcodeInput();
+  }
 }
 
 function handleBarcodeScan() {
@@ -374,7 +392,17 @@ function handleBarcodeScan() {
     barcodeMessage.value = `"${code}" kodlu məhsul tapılmadı.`;
   }
 
-  focusBarcodeInput();
+  focusBarcodeInput({ force: true });
+}
+
+function addProductToCart(product) {
+  salesStore.addToCart(product);
+  focusBarcodeInput({ force: true });
+}
+
+function changeCartQuantity(productId, quantity) {
+  salesStore.updateQuantity(productId, quantity);
+  focusBarcodeInput({ force: true });
 }
 
 onMounted(() => {
@@ -383,7 +411,14 @@ onMounted(() => {
     productStore.fetchProducts(kioskId);
   }
   shiftStore.fetchSummary();
-  focusBarcodeInput();
+  focusBarcodeInput({ force: true });
+  window.addEventListener("focus", onWindowFocus);
+  document.addEventListener("visibilitychange", onVisibilityChange);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("focus", onWindowFocus);
+  document.removeEventListener("visibilitychange", onVisibilityChange);
 });
 
 function openShiftModal() {
@@ -395,20 +430,26 @@ function openShiftModal() {
 function closeShiftModal() {
   showShiftModal.value = false;
   shiftStore.clearError();
+  focusBarcodeInput({ force: true });
 }
 
 function handleRemoveFromCart(productId) {
   salesStore.removeFromCart(productId);
   barcodeMessage.value = "";
+  focusBarcodeInput({ force: true });
 }
 
 function handleClearCart() {
   salesStore.clearCart();
   barcodeMessage.value = "";
+  focusBarcodeInput({ force: true });
 }
 
 async function handleTakeOver() {
   await shiftStore.takeOver();
+  if (!showShiftModal.value) {
+    focusBarcodeInput({ force: true });
+  }
 }
 
 async function handleHandOver() {
@@ -436,5 +477,6 @@ async function completeSale() {
     shiftStore.fetchSummary();
   }
   completingSale.value = false;
+  focusBarcodeInput({ force: true });
 }
 </script>
