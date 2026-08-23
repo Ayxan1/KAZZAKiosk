@@ -92,7 +92,7 @@ exports.getDashboardStats = async (req, res) => {
             kioskStats = await Sale.findAll({
                 where: whereClause,
                 attributes: [
-                    'kiosk_id',
+                    [sequelize.col('Sale.kiosk_id'), 'kiosk_id'],
                     [sequelize.fn('COUNT', sequelize.col('sale_id')), 'total_sales'],
                     [sequelize.fn('SUM', sequelize.col('total_amount')), 'total_revenue']
                 ],
@@ -101,7 +101,7 @@ exports.getDashboardStats = async (req, res) => {
                     as: 'kiosk',
                     attributes: ['kiosk_id', 'kiosk_name']
                 }],
-                group: ['kiosk_id', 'kiosk.kiosk_id', 'kiosk.kiosk_name'],
+                group: ['Sale.kiosk_id', 'kiosk.kiosk_id', 'kiosk.kiosk_name'],
                 order: [
                     [sequelize.fn('SUM', sequelize.col('total_amount')), 'DESC']
                 ],
