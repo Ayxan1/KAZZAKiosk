@@ -47,6 +47,7 @@ class SalesProvider with ChangeNotifier {
 
   void removeFromCart(int index) {
     _cartItems.removeAt(index);
+    _error = null;
     notifyListeners();
   }
 
@@ -69,6 +70,7 @@ class SalesProvider with ChangeNotifier {
 
   void clearCart() {
     _cartItems.clear();
+    _error = null;
     notifyListeners();
   }
 

@@ -7,10 +7,9 @@ const {
 
 // Tracks a seller's "shift" at a kiosk: when they took over the register
 // (təhvil aldı) and when they handed it back (təhvil verdi). While
-// handed_over_at is null the shift is considered OPEN - the seller currently
-// holds the kiosk and is allowed to make sales. This is per-user, not an
-// exclusive kiosk lock, so multiple sellers assigned to the same kiosk can
-// each have their own independent shift history.
+// handed_over_at is null the shift is considered OPEN. Only one open
+// shift is allowed per kiosk — another seller must wait until the
+// current holder hands it over.
 const Shift = sequelize.define('Shift', {
     shift_id: {
         type: DataTypes.UUID,

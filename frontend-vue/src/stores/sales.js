@@ -43,8 +43,13 @@ export const useSalesStore = defineStore('sales', () => {
         return true
     }
 
+    function clearError() {
+        error.value = null
+    }
+
     function removeFromCart(productId) {
         cart.value = cart.value.filter(item => item.product_id !== productId)
+        error.value = null
     }
 
     function updateQuantity(productId, quantity) {
@@ -66,6 +71,7 @@ export const useSalesStore = defineStore('sales', () => {
 
     function clearCart() {
         cart.value = []
+        error.value = null
     }
 
     async function completeSale(kioskId, paymentMethod) {
@@ -118,6 +124,7 @@ export const useSalesStore = defineStore('sales', () => {
         removeFromCart,
         updateQuantity,
         clearCart,
+        clearError,
         completeSale,
         fetchHistory
     }

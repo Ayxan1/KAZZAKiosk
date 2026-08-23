@@ -30,7 +30,8 @@ exports.getDashboardStats = async (req, res) => {
 
         if (startDate && endDate) {
             whereClause.sale_date = {
-                [Op.between]: [new Date(startDate), new Date(endDate)]
+                [Op.gte]: new Date(`${startDate}T00:00:00.000Z`),
+                [Op.lte]: new Date(`${endDate}T23:59:59.999Z`)
             };
         }
 
@@ -150,7 +151,8 @@ exports.getSalesReport = async (req, res) => {
 
         const whereClause = {
             sale_date: {
-                [Op.between]: [new Date(startDate), new Date(endDate)]
+                [Op.gte]: new Date(`${startDate}T00:00:00.000Z`),
+                [Op.lte]: new Date(`${endDate}T23:59:59.999Z`)
             }
         };
 
@@ -269,7 +271,8 @@ exports.getSellerPerformance = async (req, res) => {
 
         if (startDate && endDate) {
             whereClause.sale_date = {
-                [Op.between]: [new Date(startDate), new Date(endDate)]
+                [Op.gte]: new Date(`${startDate}T00:00:00.000Z`),
+                [Op.lte]: new Date(`${endDate}T23:59:59.999Z`)
             };
         }
 

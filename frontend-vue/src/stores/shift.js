@@ -111,6 +111,10 @@ export const useShiftStore = defineStore('shift', () => {
         selectedShiftSales.value = null
     }
 
+    function clearError() {
+        error.value = null
+    }
+
     return {
         isOpen,
         shift,
@@ -128,6 +132,7 @@ export const useShiftStore = defineStore('shift', () => {
         fetchActiveShifts,
         fetchShiftHistory,
         fetchShiftSales,
-        clearSelectedShiftSales
+        clearSelectedShiftSales,
+        clearError
     }
 })

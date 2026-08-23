@@ -13,6 +13,9 @@ router.use(authenticate);
 // Get products across all kiosks (Admin only)
 router.get('/all', isAdmin, productController.getAllKioskProducts);
 
+// Lookup catalog product by barcode or code (for add-form auto-fill)
+router.get('/lookup', productController.lookupProduct);
+
 // Get products for a kiosk
 router.get('/kiosk/:kioskId', hasKioskAccess('kioskId'), productController.getKioskProducts);
 

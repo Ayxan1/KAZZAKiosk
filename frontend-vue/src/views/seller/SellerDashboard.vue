@@ -90,7 +90,17 @@
 
         <!-- Cart -->
         <div class="bg-white rounded-xl shadow-sm p-6">
-          <h2 class="text-xl font-semibold mb-4">Səbət</h2>
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Səbət</h2>
+            <button
+              v-if="salesStore.cart.length"
+              type="button"
+              @click="handleClearCart"
+              class="text-sm text-red-600 hover:text-red-700 font-medium"
+            >
+              Təmizlə
+            </button>
+          </div>
 
           <div
             v-if="!shiftStore.isOpen"
@@ -105,6 +115,9 @@
             >
               Təhvil Al
             </button>
+            <p v-if="shiftStore.error" class="text-red-600 text-sm mt-2 font-medium">
+              {{ shiftStore.error }}
+            </p>
           </div>
 
           <div class="space-y-3 mb-4 max-h-[26rem] overflow-y-auto pr-1">
@@ -148,7 +161,7 @@
                   {{ (item.price * item.quantity).toFixed(2) }} ₼
                 </p>
                 <button
-                  @click="salesStore.removeFromCart(item.product_id)"
+                  @click="handleRemoveFromCart(item.product_id)"
                   class="w-9 h-9 flex items-center justify-center bg-red-100 hover:bg-red-200 active:scale-95 text-red-600 rounded-lg transition"
                   title="Sil"
                 >
@@ -289,7 +302,7 @@
         </template>
 
         <button
-          @click="showShiftModal = false"
+          @click="closeShiftModal"
           class="w-full mt-3 bg-gray-200 hover:bg-gray-300 py-2 rounded-lg transition"
         >
           Bağla
@@ -374,8 +387,24 @@ onMounted(() => {
 });
 
 function openShiftModal() {
+  shiftStore.clearError();
   showShiftModal.value = true;
   shiftStore.fetchSummary();
+}
+
+function closeShiftModal() {
+  showShiftModal.value = false;
+  shiftStore.clearError();
+}
+
+function handleRemoveFromCart(productId) {
+  salesStore.removeFromCart(productId);
+  barcodeMessage.value = "";
+}
+
+function handleClearCart() {
+  salesStore.clearCart();
+  barcodeMessage.value = "";
 }
 
 async function handleTakeOver() {

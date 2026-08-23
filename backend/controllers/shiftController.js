@@ -108,6 +108,29 @@ exports.takeOverShift = async (req, res) => {
             });
         }
 
+        const openKioskShift = await Shift.findOne({
+            where: {
+                kiosk_id: kioskId,
+                handed_over_at: null
+            },
+            include: [{
+                model: User,
+                as: 'user',
+                attributes: ['user_id', 'full_name']
+            }]
+        });
+
+        if (openKioskShift) {
+            const holder = openKioskShift.user?.full_name;
+            return res.status(400).json({
+                success: false,
+                code: 'KIOSK_SHIFT_OPEN',
+                message: holder
+                    ? `Bu kioskda növbə artıq açıqdır (${holder}). Əvvəlcə növbə bağlanmalıdır.`
+                    : 'Bu kioskda növbə artıq açıqdır. Əvvəlcə növbə bağlanmalıdır.'
+            });
+        }
+
         const shift = await Shift.create({
             user_id: req.user.user_id,
             kiosk_id: kioskId,
@@ -127,6 +150,13 @@ exports.takeOverShift = async (req, res) => {
             shift
         });
     } catch (error) {
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({
+                success: false,
+                code: 'KIOSK_SHIFT_OPEN',
+                message: 'Bu kioskda növbə artıq açıqdır. Əvvəlcə növbə bağlanmalıdır.'
+            });
+        }
         console.error('Take over shift error:', error);
         res.status(500).json({
             success: false,

@@ -15,6 +15,94 @@ const {
     logActivity
 } = require('../utils/activityLogger');
 
+async function findProductByCodeOrBarcode(product_code, barcode) {
+    if (barcode) {
+        const byBarcode = await Product.findOne({
+            where: {
+                barcode
+            }
+        });
+        if (byBarcode) return byBarcode;
+    }
+
+    if (product_code) {
+        return Product.findOne({
+            where: {
+                product_code
+            }
+        });
+    }
+
+    return null;
+}
+
+// Lookup a catalog product by barcode or code so the admin add form can
+// auto-fill the name and restock instead of creating a duplicate.
+exports.lookupProduct = async (req, res) => {
+    try {
+        const {
+            barcode,
+            product_code,
+            kioskId
+        } = req.query;
+
+        if (!barcode && !product_code) {
+            return res.status(400).json({
+                success: false,
+                message: 'Barkod və ya kod tələb olunur.'
+            });
+        }
+
+        const product = await findProductByCodeOrBarcode(product_code, barcode);
+        if (!product) {
+            return res.json({
+                success: true,
+                found: false
+            });
+        }
+
+        let selectedKioskProduct = null;
+        if (kioskId) {
+            selectedKioskProduct = await KioskProduct.findOne({
+                where: {
+                    kiosk_id: kioskId,
+                    product_id: product.product_id
+                }
+            });
+        }
+
+        let priceSource = selectedKioskProduct;
+        if (!priceSource) {
+            priceSource = await KioskProduct.findOne({
+                where: {
+                    product_id: product.product_id
+                }
+            });
+        }
+
+        res.json({
+            success: true,
+            found: true,
+            product: {
+                product_id: product.product_id,
+                name: product.name,
+                product_code: product.product_code,
+                barcode: product.barcode,
+                price: priceSource ? parseFloat(priceSource.price) : null,
+                stock_quantity: selectedKioskProduct ? selectedKioskProduct.stock_quantity : null,
+                existsInKiosk: !!selectedKioskProduct
+            }
+        });
+    } catch (error) {
+        console.error('Lookup product error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server xətası.',
+            error: error.message
+        });
+    }
+};
+
 // Get products across ALL kiosks (Admin only) - used for the admin inventory table
 exports.getAllKioskProducts = async (req, res) => {
     try {
@@ -169,29 +257,34 @@ exports.addProductToKiosk = async (req, res) => {
             stock_quantity
         } = req.body;
 
-        // Validate input
-        if (!name || price === undefined || stock_quantity === undefined) {
+        if (price === undefined || stock_quantity === undefined) {
             await transaction.rollback();
             return res.status(400).json({
                 success: false,
-                message: 'Məhsul adı, qiymət və stok miqdarı tələb olunur.'
+                message: 'Qiymət və stok miqdarı tələb olunur.'
             });
         }
 
-        // Check or create product
-        let product = await Product.findOne({
-            where: {
-                [Op.or]: [{
-                        product_code: product_code || null
-                    },
-                    {
-                        barcode: barcode || null
-                    }
-                ].filter(condition => Object.values(condition)[0] !== null)
-            }
-        });
+        const addedQty = parseInt(stock_quantity, 10);
+        if (Number.isNaN(addedQty) || addedQty < 0) {
+            await transaction.rollback();
+            return res.status(400).json({
+                success: false,
+                message: 'Stok miqdarı etibarsızdır.'
+            });
+        }
+
+        let product = await findProductByCodeOrBarcode(product_code, barcode);
 
         if (!product) {
+            if (!name) {
+                await transaction.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: 'Yeni məhsul üçün ad tələb olunur.'
+                });
+            }
+
             product = await Product.create({
                 name,
                 product_code,
@@ -201,7 +294,6 @@ exports.addProductToKiosk = async (req, res) => {
             });
         }
 
-        // Check if product already exists in kiosk
         const existingKioskProduct = await KioskProduct.findOne({
             where: {
                 kiosk_id: kioskId,
@@ -210,10 +302,49 @@ exports.addProductToKiosk = async (req, res) => {
         });
 
         if (existingKioskProduct) {
-            await transaction.rollback();
-            return res.status(400).json({
-                success: false,
-                message: 'Bu məhsul artıq kioskda mövcuddur.'
+            const oldStock = parseInt(existingKioskProduct.stock_quantity, 10) || 0;
+            const newStock = oldStock + addedQty;
+            const productName = product.name;
+
+            await existingKioskProduct.update({
+                stock_quantity: newStock
+            }, {
+                transaction
+            });
+
+            await ProductHistory.create({
+                kiosk_id: kioskId,
+                product_id: product.product_id,
+                user_id: req.user.user_id,
+                action_type: 'EDIT_STOCK',
+                old_value: String(oldStock),
+                new_value: String(newStock),
+                description: `Stok artırıldı: ${oldStock} → ${newStock} (+${addedQty})`
+            }, {
+                transaction
+            });
+
+            await transaction.commit();
+
+            await logActivity(
+                req.user.user_id,
+                'UPDATE_PRODUCT',
+                `${req.user.full_name} "${productName}" məhsulunun stokunu ${addedQty} ədəd artırdı.`,
+                kioskId
+            );
+
+            const result = await KioskProduct.findByPk(existingKioskProduct.kiosk_product_id, {
+                include: [{
+                    model: Product,
+                    as: 'product'
+                }]
+            });
+
+            return res.json({
+                success: true,
+                updated: true,
+                message: `"${productName}" məhsulunun stoku ${addedQty} ədəd artırıldı. Yeni stok: ${newStock}.`,
+                product: result
             });
         }
 
@@ -240,7 +371,7 @@ exports.addProductToKiosk = async (req, res) => {
                 price,
                 stock_quantity
             }),
-            description: `Məhsul əlavə edildi: ${name}`
+            description: `Məhsul əlavə edildi: ${product.name}`
         }, {
             transaction
         });
@@ -250,7 +381,7 @@ exports.addProductToKiosk = async (req, res) => {
         await logActivity(
             req.user.user_id,
             'CREATE_PRODUCT',
-            `${req.user.full_name} "${name}" məhsulunu kioska əlavə etdi.`,
+            `${req.user.full_name} "${product.name}" məhsulunu kioska əlavə etdi.`,
             kioskId
         );
 

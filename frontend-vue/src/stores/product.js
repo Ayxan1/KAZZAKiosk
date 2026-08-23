@@ -71,10 +71,31 @@ export const useProductStore = defineStore('product', () => {
         }
     }
 
+    async function lookupProduct({
+        barcode,
+        product_code,
+        kioskId
+    } = {}) {
+        if (!barcode && !product_code) return null
+        try {
+            const data = await apiClient.get('/products/lookup', {
+                params: {
+                    barcode: barcode || undefined,
+                    product_code: product_code || undefined,
+                    kioskId: kioskId || undefined
+                }
+            })
+            return data
+        } catch (err) {
+            console.error('Məhsul axtarışı alınmadı:', err)
+            return null
+        }
+    }
+
     async function addProduct(kioskId, product) {
         error.value = null
         try {
-            await apiClient.post(`/products/kiosk/${kioskId}`, {
+            const data = await apiClient.post(`/products/kiosk/${kioskId}`, {
                 name: product.product_name,
                 product_code: product.product_code || undefined,
                 barcode: product.barcode || undefined,
@@ -82,11 +103,17 @@ export const useProductStore = defineStore('product', () => {
                 stock_quantity: product.stock_quantity
             })
             await fetchProducts(kioskId)
-            return true
+            return {
+                ok: true,
+                updated: !!data.updated,
+                message: data.message
+            }
         } catch (err) {
             error.value = err.message || 'Məhsul əlavə edilə bilmədi'
             console.error('Məhsul əlavə edilə bilmədi:', err)
-            return false
+            return {
+                ok: false
+            }
         }
     }
 
@@ -130,6 +157,7 @@ export const useProductStore = defineStore('product', () => {
         error,
         fetchProducts,
         fetchAllProducts,
+        lookupProduct,
         addProduct,
         updateProduct,
         deleteProduct

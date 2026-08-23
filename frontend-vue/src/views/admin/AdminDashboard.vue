@@ -27,7 +27,7 @@
         <button
           v-for="tab in tabs"
           :key="tab.id"
-          @click="activeTab = tab.id"
+          @click="setActiveTab(tab.id)"
           :class="[
             'px-6 py-3 font-medium transition',
             activeTab === tab.id
@@ -177,43 +177,53 @@
           </div>
         </div>
 
-        <div v-if="reportStore.salesReport.length">
-          <h3 class="font-medium mb-2">Tarix üzrə bölgü</h3>
-          <div
-            class="overflow-x-auto max-h-80 overflow-y-auto border border-gray-100 rounded-lg"
-          >
-            <table class="w-full text-sm text-left">
-              <thead
-                class="text-gray-600 border-b border-gray-200 bg-gray-50 sticky top-0"
-              >
-                <tr>
-                  <th class="py-2 px-4">Dövr</th>
-                  <th class="py-2 px-4">Satış sayı</th>
-                  <th class="py-2 px-4">Cəmi</th>
-                  <th class="py-2 px-4">Orta</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="row in reportStore.salesReport"
-                  :key="row.period"
-                  class="border-b border-gray-100"
-                >
-                  <td class="py-2 px-4 whitespace-nowrap">
-                    {{ new Date(row.period).toLocaleDateString("az-AZ") }}
-                  </td>
-                  <td class="py-2 px-4">{{ row.total_sales }}</td>
-                  <td class="py-2 px-4">
-                    {{ parseFloat(row.total_revenue).toFixed(2) }} ₼
-                  </td>
-                  <td class="py-2 px-4">
-                    {{ parseFloat(row.avg_sale).toFixed(2) }} ₼
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <template v-if="reportStore.salesReport.length">
+          <div class="mb-6">
+            <SalesBarChart
+              :rows="reportStore.salesReport"
+              :group-by="statsFilters.groupBy"
+            />
           </div>
-        </div>
+
+          <div>
+            <h3 class="font-medium mb-2">Tarix üzrə bölgü</h3>
+            <div
+              class="overflow-x-auto max-h-80 overflow-y-auto border border-gray-100 rounded-lg"
+            >
+              <table class="w-full text-sm text-left">
+                <thead
+                  class="text-gray-600 border-b border-gray-200 bg-gray-50 sticky top-0"
+                >
+                  <tr>
+                    <th class="py-2 px-4">Dövr</th>
+                    <th class="py-2 px-4">Satış sayı</th>
+                    <th class="py-2 px-4">Cəmi</th>
+                    <th class="py-2 px-4">Orta</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="row in reportStore.salesReport"
+                    :key="row.period"
+                    class="border-b border-gray-100"
+                  >
+                    <td class="py-2 px-4 whitespace-nowrap">
+                      {{ new Date(row.period).toLocaleDateString("az-AZ") }}
+                    </td>
+                    <td class="py-2 px-4">{{ row.total_sales }}</td>
+                    <td class="py-2 px-4">
+                      {{ parseFloat(row.total_revenue).toFixed(2) }} ₼
+                    </td>
+                    <td class="py-2 px-4">
+                      {{ parseFloat(row.avg_sale).toFixed(2) }} ₼
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </template>
+
         <p v-else class="text-gray-500 text-sm">
           Tarix üzrə bölgünü görmək üçün tarix aralığı seçib "Göstər" düyməsini
           basın.
@@ -228,7 +238,7 @@
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold">Kiosklar</h2>
           <button
-            @click="showNewKioskForm = !showNewKioskForm"
+            @click="toggleNewKioskForm"
             class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
           >
             {{ showNewKioskForm ? "Bağla" : "+ Yeni Kiosk" }}
@@ -253,6 +263,9 @@
           >
             Yarat
           </button>
+          <p v-if="kioskStore.error" class="w-full text-red-600 text-sm">
+            {{ kioskStore.error }}
+          </p>
         </form>
 
         <div class="space-y-2 max-h-[32rem] overflow-y-auto pr-1">
@@ -352,12 +365,15 @@
         <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
           <h2 class="text-xl font-semibold">Bütün Kiosklarda Məhsullar</h2>
           <button
-            @click="showNewProductForm = !showNewProductForm"
+            @click="toggleNewProductForm"
             class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
           >
             {{ showNewProductForm ? "Bağla" : "+ Məhsul Əlavə Et" }}
           </button>
         </div>
+        <p v-if="productFormSuccess" class="text-green-600 text-sm mb-4">
+          {{ productFormSuccess }}
+        </p>
 
         <form
           v-if="showNewProductForm"
@@ -397,6 +413,12 @@
             placeholder="Barkod (opsional)"
             class="px-3 py-2 border border-gray-300 rounded-lg"
           />
+          <p
+            v-if="barcodeMatchHint"
+            class="md:col-span-3 text-sm text-indigo-700"
+          >
+            {{ barcodeMatchHint }}
+          </p>
           <input
             v-model.number="newProduct.price"
             type="number"
@@ -420,6 +442,9 @@
           >
             Əlavə et
           </button>
+          <p v-if="productStore.error" class="md:col-span-3 text-red-600 text-sm">
+            {{ productStore.error }}
+          </p>
         </form>
 
         <div class="flex flex-wrap gap-3 mb-4">
@@ -693,7 +718,7 @@
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold">İstifadəçilər</h2>
           <button
-            @click="showNewUserForm = !showNewUserForm"
+            @click="toggleNewUserForm"
             class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
           >
             {{ showNewUserForm ? "Bağla" : "+ Yeni Satıcı" }}
@@ -754,6 +779,9 @@
           >
             Yarat
           </button>
+          <p v-if="userStore.error" class="md:col-span-2 text-red-600 text-sm">
+            {{ userStore.error }}
+          </p>
         </form>
 
         <div v-if="userStore.loading" class="text-gray-600">Yüklənir...</div>
@@ -1001,7 +1029,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useAuthStore } from "../../stores/auth";
 import { useKioskStore } from "../../stores/kiosk";
 import { useReportStore } from "../../stores/report";
@@ -1009,6 +1037,7 @@ import { useUserStore } from "../../stores/user";
 import { useProductStore } from "../../stores/product";
 import { useActivityStore } from "../../stores/activity";
 import { useShiftStore } from "../../stores/shift";
+import SalesBarChart from "../../components/SalesBarChart.vue";
 
 const authStore = useAuthStore();
 const kioskStore = useKioskStore();
@@ -1019,6 +1048,47 @@ const activityStore = useActivityStore();
 const shiftStore = useShiftStore();
 
 const activeTab = ref("dashboard");
+
+function toLocalDateInput(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function emptyNewProduct() {
+  return {
+    kiosk_id: "",
+    product_name: "",
+    product_code: "",
+    barcode: "",
+    price: null,
+    stock_quantity: null,
+  };
+}
+
+function emptyNewUser() {
+  return {
+    full_name: "",
+    username: "",
+    password: "",
+    role: "seller",
+    assigned_kiosk_id: "",
+  };
+}
+
+function setActiveTab(tabId) {
+  if (activeTab.value !== tabId) {
+    resetTransientForms();
+  }
+  activeTab.value = tabId;
+}
+
+function resetTransientForms() {
+  if (showNewProductForm.value) closeNewProductForm();
+  if (showNewKioskForm.value) closeNewKioskForm();
+  if (showNewUserForm.value) closeNewUserForm();
+}
 
 const tabs = [
   { id: "dashboard", label: "Dashboard" },
@@ -1111,6 +1181,22 @@ const editingKioskId = ref(null);
 const editKioskName = ref("");
 const editKioskActive = ref(true);
 
+function closeNewKioskForm() {
+  showNewKioskForm.value = false;
+  newKioskName.value = "";
+  kioskStore.error = null;
+}
+
+function toggleNewKioskForm() {
+  if (showNewKioskForm.value) {
+    closeNewKioskForm();
+    return;
+  }
+  kioskStore.error = null;
+  newKioskName.value = "";
+  showNewKioskForm.value = true;
+}
+
 const activeShiftsByKiosk = computed(() => {
   const map = {};
   for (const s of shiftStore.activeShifts) {
@@ -1140,10 +1226,7 @@ function viewShiftSales(shift) {
 
 async function handleCreateKiosk() {
   const ok = await kioskStore.createKiosk(newKioskName.value.trim());
-  if (ok) {
-    newKioskName.value = "";
-    showNewKioskForm.value = false;
-  }
+  if (ok) closeNewKioskForm();
 }
 
 function startEditKiosk(kiosk) {
@@ -1164,14 +1247,86 @@ async function handleUpdateKiosk(kioskId) {
 const showNewProductForm = ref(false);
 const productFilterKiosk = ref("");
 const productFilterSearch = ref("");
-const newProduct = ref({
-  kiosk_id: "",
-  product_name: "",
-  product_code: "",
-  barcode: "",
-  price: null,
-  stock_quantity: null,
-});
+const newProduct = ref(emptyNewProduct());
+const barcodeMatchHint = ref("");
+const productFormSuccess = ref("");
+const autoFilledFromBarcode = ref(null);
+let barcodeLookupTimer = null;
+
+function closeNewProductForm() {
+  showNewProductForm.value = false;
+  newProduct.value = emptyNewProduct();
+  barcodeMatchHint.value = "";
+  productFormSuccess.value = "";
+  autoFilledFromBarcode.value = null;
+  productStore.error = null;
+}
+
+function toggleNewProductForm() {
+  if (showNewProductForm.value) {
+    closeNewProductForm();
+    return;
+  }
+  productStore.error = null;
+  productFormSuccess.value = "";
+  newProduct.value = emptyNewProduct();
+  barcodeMatchHint.value = "";
+  autoFilledFromBarcode.value = null;
+  showNewProductForm.value = true;
+}
+
+async function lookupExistingProduct() {
+  const barcode = (newProduct.value.barcode || "").trim();
+  const productCode = (newProduct.value.product_code || "").trim();
+
+  if (!barcode && !productCode) {
+    if (autoFilledFromBarcode.value) {
+      newProduct.value.product_name = "";
+      autoFilledFromBarcode.value = null;
+    }
+    barcodeMatchHint.value = "";
+    return;
+  }
+
+  const data = await productStore.lookupProduct({
+    barcode: barcode || undefined,
+    product_code: barcode ? undefined : productCode || undefined,
+    kioskId: newProduct.value.kiosk_id || undefined,
+  });
+
+  if (data?.found && data.product) {
+    newProduct.value.product_name = data.product.name || "";
+    if (data.product.product_code && !newProduct.value.product_code) {
+      newProduct.value.product_code = data.product.product_code;
+    }
+    if (data.product.price != null && newProduct.value.price == null) {
+      newProduct.value.price = data.product.price;
+    }
+    autoFilledFromBarcode.value = barcode || productCode;
+    barcodeMatchHint.value = data.product.existsInKiosk
+      ? `"${data.product.name}" artıq bu kioskdadır (stok: ${data.product.stock_quantity}). Əlavə etdikdə say artırılacaq.`
+      : `"${data.product.name}" tapıldı. Ad avtomatik dolduruldu.`;
+    return;
+  }
+
+  if (autoFilledFromBarcode.value) {
+    newProduct.value.product_name = "";
+    autoFilledFromBarcode.value = null;
+  }
+  barcodeMatchHint.value = "";
+}
+
+watch(
+  () => [
+    newProduct.value.barcode,
+    newProduct.value.product_code,
+    newProduct.value.kiosk_id,
+  ],
+  () => {
+    clearTimeout(barcodeLookupTimer);
+    barcodeLookupTimer = setTimeout(lookupExistingProduct, 300);
+  },
+);
 
 function loadAllProducts() {
   productStore.fetchAllProducts({
@@ -1181,33 +1336,44 @@ function loadAllProducts() {
 }
 
 async function handleCreateProduct() {
-  const ok = await productStore.addProduct(
+  productFormSuccess.value = "";
+  const result = await productStore.addProduct(
     newProduct.value.kiosk_id,
     newProduct.value,
   );
-  if (ok) {
-    newProduct.value = {
-      kiosk_id: "",
-      product_name: "",
-      product_code: "",
-      barcode: "",
-      price: null,
-      stock_quantity: null,
-    };
+  if (result?.ok) {
+    productFormSuccess.value =
+      result.message || "Məhsul uğurla əlavə edildi.";
+    newProduct.value = emptyNewProduct();
+    barcodeMatchHint.value = "";
+    autoFilledFromBarcode.value = null;
     showNewProductForm.value = false;
     loadAllProducts();
+    setTimeout(() => {
+      productFormSuccess.value = "";
+    }, 4000);
   }
 }
 
 // --- Users ---
 const showNewUserForm = ref(false);
-const newUser = ref({
-  full_name: "",
-  username: "",
-  password: "",
-  role: "seller",
-  assigned_kiosk_id: "",
-});
+const newUser = ref(emptyNewUser());
+
+function closeNewUserForm() {
+  showNewUserForm.value = false;
+  newUser.value = emptyNewUser();
+  userStore.error = null;
+}
+
+function toggleNewUserForm() {
+  if (showNewUserForm.value) {
+    closeNewUserForm();
+    return;
+  }
+  userStore.error = null;
+  newUser.value = emptyNewUser();
+  showNewUserForm.value = true;
+}
 const editingUserId = ref(null);
 const editUser = ref({
   username: "",
@@ -1222,16 +1388,7 @@ async function handleCreateUser() {
   const payload = { ...newUser.value };
   if (payload.role !== "seller") delete payload.assigned_kiosk_id;
   const ok = await userStore.createUser(payload);
-  if (ok) {
-    newUser.value = {
-      full_name: "",
-      username: "",
-      password: "",
-      role: "seller",
-      assigned_kiosk_id: "",
-    };
-    showNewUserForm.value = false;
-  }
+  if (ok) closeNewUserForm();
 }
 
 function startEditUser(user) {
@@ -1267,5 +1424,16 @@ onMounted(() => {
   loadAllProducts();
   activityStore.fetchLogs();
   shiftStore.fetchActiveShifts();
+
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 29);
+  statsFilters.value.startDate = toLocalDateInput(start);
+  statsFilters.value.endDate = toLocalDateInput(end);
+  reportStore.fetchSalesReport({
+    startDate: statsFilters.value.startDate,
+    endDate: statsFilters.value.endDate,
+    groupBy: statsFilters.value.groupBy,
+  });
 });
 </script>
