@@ -374,6 +374,12 @@
         <p v-if="productFormSuccess" class="text-green-600 text-sm mb-4">
           {{ productFormSuccess }}
         </p>
+        <p
+          v-if="productStore.error && !showNewProductForm"
+          class="text-red-600 text-sm mb-4"
+        >
+          {{ productStore.error }}
+        </p>
 
         <form
           v-if="showNewProductForm"
@@ -489,6 +495,7 @@
                 <th class="py-2 pr-4">Kod</th>
                 <th class="py-2 pr-4">Qiymət</th>
                 <th class="py-2 pr-4">Say</th>
+                <th class="py-2 pr-4"></th>
               </tr>
             </thead>
             <tbody>
@@ -502,6 +509,20 @@
                 <td class="py-2 pr-4">{{ p.product_code || "-" }}</td>
                 <td class="py-2 pr-4">{{ p.price.toFixed(2) }} ₼</td>
                 <td class="py-2 pr-4">{{ p.stock_quantity }}</td>
+                <td class="py-2 pr-4">
+                  <button
+                    type="button"
+                    @click="handleDeleteProduct(p)"
+                    :disabled="deletingProductId === p.kiosk_product_id"
+                    class="px-3 py-1 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition disabled:opacity-50"
+                  >
+                    {{
+                      deletingProductId === p.kiosk_product_id
+                        ? "Silinir..."
+                        : "Sil"
+                    }}
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -1247,6 +1268,7 @@ async function handleUpdateKiosk(kioskId) {
 const showNewProductForm = ref(false);
 const productFilterKiosk = ref("");
 const productFilterSearch = ref("");
+const deletingProductId = ref(null);
 const newProduct = ref(emptyNewProduct());
 const barcodeMatchHint = ref("");
 const productFormSuccess = ref("");
@@ -1333,6 +1355,27 @@ function loadAllProducts() {
     kioskId: productFilterKiosk.value || undefined,
     search: productFilterSearch.value || undefined,
   });
+}
+
+async function handleDeleteProduct(product) {
+  const name = product.product_name || "bu məhsul";
+  const kiosk = product.kiosk_name ? ` (${product.kiosk_name})` : "";
+  if (!window.confirm(`"${name}"${kiosk} silinsin?`)) return;
+
+  productFormSuccess.value = "";
+  productStore.error = null;
+  deletingProductId.value = product.kiosk_product_id;
+  const ok = await productStore.deleteProduct(
+    product.kiosk_id,
+    product.product_id,
+  );
+  deletingProductId.value = null;
+  if (ok) {
+    productFormSuccess.value = "Məhsul silindi.";
+    setTimeout(() => {
+      productFormSuccess.value = "";
+    }, 4000);
+  }
 }
 
 async function handleCreateProduct() {

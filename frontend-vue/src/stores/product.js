@@ -141,7 +141,10 @@ export const useProductStore = defineStore('product', () => {
         error.value = null
         try {
             await apiClient.delete(`/products/kiosk/${kioskId}/product/${productId}`)
-            await fetchProducts(kioskId)
+            products.value = products.value.filter((p) => p.product_id !== productId)
+            allProducts.value = allProducts.value.filter(
+                (p) => !(p.kiosk_id === kioskId && p.product_id === productId)
+            )
             return true
         } catch (err) {
             error.value = err.message || 'Məhsul silinə bilmədi'
