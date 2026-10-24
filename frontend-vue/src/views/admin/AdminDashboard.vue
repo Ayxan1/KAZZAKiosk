@@ -593,9 +593,11 @@
               </tr>
             </thead>
             <tbody>
-              <tr
+              <template
                 v-for="p in productStore.allProducts"
                 :key="p.kiosk_product_id"
+              >
+              <tr
                 class="border-b border-gray-100"
               >
                 <td class="py-2 pr-4">{{ p.kiosk_name }}</td>
@@ -605,20 +607,104 @@
                 <td class="py-2 pr-4">{{ p.price.toFixed(2) }} ₼</td>
                 <td class="py-2 pr-4">{{ p.stock_quantity }}</td>
                 <td class="py-2 pr-4">
-                  <button
-                    type="button"
-                    @click="handleDeleteProduct(p)"
-                    :disabled="deletingProductId === p.kiosk_product_id"
-                    class="px-3 py-1 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition disabled:opacity-50"
-                  >
-                    {{
-                      deletingProductId === p.kiosk_product_id
-                        ? "Silinir..."
-                        : "Sil"
-                    }}
-                  </button>
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      @click="startEditProduct(p)"
+                      class="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition"
+                    >
+                      Redaktə et
+                    </button>
+                    <button
+                      type="button"
+                      @click="handleDeleteProduct(p)"
+                      :disabled="deletingProductId === p.kiosk_product_id"
+                      class="px-3 py-1 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition disabled:opacity-50"
+                    >
+                      {{
+                        deletingProductId === p.kiosk_product_id
+                          ? "Silinir..."
+                          : "Sil"
+                      }}
+                    </button>
+                  </div>
                 </td>
               </tr>
+              <tr
+                v-if="editingProductId === p.kiosk_product_id"
+                class="bg-gray-50"
+              >
+                <td colspan="7" class="py-3 pr-4">
+                  <form
+                    @submit.prevent="handleUpdateProduct"
+                    class="grid grid-cols-1 sm:grid-cols-3 gap-2"
+                  >
+                    <input
+                      v-model="editProduct.product_name"
+                      type="text"
+                      required
+                      placeholder="Məhsul adı"
+                      class="px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                    <input
+                      v-model="editProduct.product_code"
+                      type="text"
+                      placeholder="Kod"
+                      class="px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                    <input
+                      v-model="editProduct.barcode"
+                      type="text"
+                      placeholder="Barkod"
+                      class="px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                    <input
+                      v-model.number="editProduct.price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      placeholder="Qiymət"
+                      class="px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                    <input
+                      v-model.number="editProduct.stock_quantity"
+                      type="number"
+                      min="0"
+                      required
+                      placeholder="Say"
+                      class="px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                    <div class="flex flex-wrap gap-2">
+                      <button
+                        type="submit"
+                        :disabled="savingProductId === p.kiosk_product_id"
+                        class="px-3 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg transition disabled:opacity-50"
+                      >
+                        {{
+                          savingProductId === p.kiosk_product_id
+                            ? "Saxlanır..."
+                            : "Yadda saxla"
+                        }}
+                      </button>
+                      <button
+                        type="button"
+                        @click="cancelEditProduct"
+                        class="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition"
+                      >
+                        Ləğv et
+                      </button>
+                    </div>
+                    <p
+                      v-if="productStore.error"
+                      class="sm:col-span-3 text-red-600 text-sm"
+                    >
+                      {{ productStore.error }}
+                    </p>
+                  </form>
+                </td>
+              </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -1431,6 +1517,17 @@ const showNewProductForm = ref(false);
 const productFilterKiosk = ref("");
 const productFilterSearch = ref("");
 const deletingProductId = ref(null);
+const editingProductId = ref(null);
+const savingProductId = ref(null);
+const editProduct = ref({
+  kiosk_id: "",
+  product_id: "",
+  product_name: "",
+  product_code: "",
+  barcode: "",
+  price: null,
+  stock_quantity: null,
+});
 const newProduct = ref(emptyNewProduct());
 const barcodeMatchHint = ref("");
 const productFormSuccess = ref("");
@@ -1517,6 +1614,49 @@ function loadAllProducts() {
     kioskId: productFilterKiosk.value || undefined,
     search: productFilterSearch.value || undefined,
   });
+}
+
+function startEditProduct(product) {
+  editingProductId.value = product.kiosk_product_id;
+  editProduct.value = {
+    kiosk_id: product.kiosk_id,
+    product_id: product.product_id,
+    product_name: product.product_name || "",
+    product_code: product.product_code || "",
+    barcode: product.barcode || "",
+    price: product.price,
+    stock_quantity: product.stock_quantity,
+  };
+  productStore.error = null;
+  productFormSuccess.value = "";
+}
+
+function cancelEditProduct() {
+  editingProductId.value = null;
+  productStore.error = null;
+}
+
+async function handleUpdateProduct() {
+  savingProductId.value = editingProductId.value;
+  const result = await productStore.updateProduct(
+    editProduct.value.kiosk_id,
+    editProduct.value.product_id,
+    {
+      product_name: editProduct.value.product_name.trim(),
+      product_code: editProduct.value.product_code.trim(),
+      barcode: editProduct.value.barcode.trim(),
+      price: editProduct.value.price,
+      stock_quantity: editProduct.value.stock_quantity,
+    },
+  );
+  savingProductId.value = null;
+  if (result?.ok) {
+    editingProductId.value = null;
+    productFormSuccess.value = result.message || "Məhsul yeniləndi.";
+    setTimeout(() => {
+      productFormSuccess.value = "";
+    }, 4000);
+  }
 }
 
 async function handleDeleteProduct(product) {

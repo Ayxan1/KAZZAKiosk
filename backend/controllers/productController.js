@@ -570,6 +570,12 @@ exports.updateKioskProduct = async (req, res) => {
     } catch (error) {
         await transaction.rollback();
         console.error('Update product error:', error);
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(409).json({
+                success: false,
+                message: 'Bu kod artıq başqa məhsulda var.'
+            });
+        }
         res.status(500).json({
             success: false,
             message: 'Server xətası.',

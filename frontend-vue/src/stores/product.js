@@ -122,18 +122,48 @@ export const useProductStore = defineStore('product', () => {
         try {
             const payload = {}
             if (updates.product_name !== undefined) payload.name = updates.product_name
-            if (updates.product_code !== undefined) payload.product_code = updates.product_code
-            if (updates.barcode !== undefined) payload.barcode = updates.barcode
+            if (updates.product_code !== undefined) payload.product_code = updates.product_code || null
+            if (updates.barcode !== undefined) payload.barcode = updates.barcode || null
             if (updates.price !== undefined) payload.price = updates.price
             if (updates.stock_quantity !== undefined) payload.stock_quantity = updates.stock_quantity
 
-            await apiClient.put(`/products/kiosk/${kioskId}/product/${productId}`, payload)
-            await fetchProducts(kioskId)
-            return true
+            const data = await apiClient.put(`/products/kiosk/${kioskId}/product/${productId}`, payload)
+            const nextCode = updates.product_code !== undefined ? (updates.product_code || null) : undefined
+            const nextBarcode = updates.barcode !== undefined ? (updates.barcode || null) : undefined
+
+            products.value = products.value.map((p) => {
+                if (p.product_id !== productId) return p
+                return {
+                    ...p,
+                    product_name: updates.product_name ?? p.product_name,
+                    product_code: nextCode !== undefined ? nextCode : p.product_code,
+                    barcode: nextBarcode !== undefined ? nextBarcode : p.barcode,
+                    price: updates.price !== undefined ? Number(updates.price) : p.price,
+                    stock_quantity: updates.stock_quantity !== undefined ? Number(updates.stock_quantity) : p.stock_quantity
+                }
+            })
+            allProducts.value = allProducts.value.map((p) => {
+                if (p.product_id !== productId) return p
+                const sameKiosk = p.kiosk_id === kioskId
+                return {
+                    ...p,
+                    product_name: updates.product_name ?? p.product_name,
+                    product_code: nextCode !== undefined ? nextCode : p.product_code,
+                    barcode: nextBarcode !== undefined ? nextBarcode : p.barcode,
+                    price: sameKiosk && updates.price !== undefined ? Number(updates.price) : p.price,
+                    stock_quantity: sameKiosk && updates.stock_quantity !== undefined ? Number(updates.stock_quantity) : p.stock_quantity
+                }
+            })
+            return {
+                ok: true,
+                message: data.message
+            }
         } catch (err) {
             error.value = err.message || 'Məhsul yenilənə bilmədi'
             console.error('Məhsul yenilənə bilmədi:', err)
-            return false
+            return {
+                ok: false
+            }
         }
     }
 
