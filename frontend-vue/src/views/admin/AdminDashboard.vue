@@ -58,13 +58,13 @@
         </div>
         <div class="bg-white p-6 rounded-xl shadow-sm">
           <div class="text-3xl font-bold text-purple-600 mb-2">
-            {{ reportStore.stats?.totalSales ?? 0 }}
+            {{ reportStore.overview?.totalSales ?? 0 }}
           </div>
           <div class="text-gray-600">Ümumi Satışlar</div>
         </div>
         <div class="bg-white p-6 rounded-xl shadow-sm">
           <div class="text-3xl font-bold text-green-600 mb-2">
-            {{ (reportStore.stats?.totalRevenue ?? 0).toFixed(2) }} ₼
+            {{ (reportStore.overview?.totalRevenue ?? 0).toFixed(2) }} ₼
           </div>
           <div class="text-gray-600">Ümumi Gəlir</div>
         </div>
@@ -99,7 +99,9 @@
             <input
               v-model="statsFilters.startDate"
               type="date"
+              :max="statsStartMax"
               class="w-full px-3 py-2 border rounded-lg text-sm"
+              @change="clampStatsDates"
             />
           </div>
           <div>
@@ -107,7 +109,10 @@
             <input
               v-model="statsFilters.endDate"
               type="date"
+              :min="statsFilters.startDate || undefined"
+              :max="todayInput()"
               class="w-full px-3 py-2 border rounded-lg text-sm"
+              @change="clampStatsDates"
             />
           </div>
           <div>
@@ -123,6 +128,9 @@
           </div>
         </div>
 
+        <p v-if="statsDateError" class="text-red-600 text-sm mb-3">
+          {{ statsDateError }}
+        </p>
         <button
           @click="applyStatsFilters"
           class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition mb-6"
@@ -224,10 +232,94 @@
           </div>
         </template>
 
-        <p v-else class="text-gray-500 text-sm">
+        <p v-else class="text-gray-500 text-sm mb-6">
           Tarix üzrə bölgünü görmək üçün tarix aralığı seçib "Göstər" düyməsini
           basın.
         </p>
+
+        <div v-if="reportStore.sellerStats.length" class="mb-6">
+          <h3 class="font-medium mb-2">Satıcılar üzrə</h3>
+          <div
+            class="overflow-x-auto max-h-80 overflow-y-auto border border-gray-100 rounded-lg"
+          >
+            <table class="w-full text-sm text-left">
+              <thead
+                class="text-gray-600 border-b border-gray-200 bg-gray-50 sticky top-0"
+              >
+                <tr>
+                  <th class="py-2 px-4">Satıcı</th>
+                  <th class="py-2 px-4">Satış sayı</th>
+                  <th class="py-2 px-4">Cəmi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="row in reportStore.sellerStats"
+                  :key="row.seller_id"
+                  class="border-b border-gray-100"
+                >
+                  <td class="py-2 px-4">
+                    {{ row.seller?.full_name || "-" }}
+                  </td>
+                  <td class="py-2 px-4">{{ row.total_sales }}</td>
+                  <td class="py-2 px-4">
+                    {{ parseFloat(row.total_revenue || 0).toFixed(2) }} ₼
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="font-medium mb-2">Satış detalları</h3>
+          <p v-if="reportStore.error" class="text-red-600 text-sm mb-3">
+            {{ reportStore.error }}
+          </p>
+          <div
+            v-if="reportStore.saleDetails.length === 0"
+            class="text-gray-500 text-sm"
+          >
+            Seçilmiş aralıqda satış yoxdur.
+          </div>
+          <div v-else class="space-y-2 max-h-[32rem] overflow-y-auto pr-1">
+            <div
+              v-for="sale in reportStore.saleDetails"
+              :key="sale.sale_id"
+              class="p-3 border border-gray-200 rounded-lg"
+            >
+              <div class="flex justify-between items-start gap-3 mb-1">
+                <div>
+                  <p class="font-medium">
+                    {{ sale.seller?.full_name || "Naməlum satıcı" }}
+                  </p>
+                  <p class="text-sm text-gray-600">
+                    {{ sale.kiosk?.kiosk_name || "-" }} ·
+                    {{ new Date(sale.sale_date).toLocaleString("az-AZ") }}
+                  </p>
+                </div>
+                <div class="text-right">
+                  <p class="font-semibold text-indigo-600">
+                    {{ parseFloat(sale.total_amount).toFixed(2) }} ₼
+                  </p>
+                  <p class="text-xs text-gray-500">
+                    {{ sale.payment_method === "CASH" ? "Nağd" : "Kart" }}
+                  </p>
+                </div>
+              </div>
+              <ul class="text-sm text-gray-700 list-disc list-inside">
+                <li v-for="item in sale.items" :key="item.sale_item_id">
+                  {{ item.product?.name || "Məhsul" }}
+                  <span v-if="item.product?.product_code" class="text-gray-500">
+                    ({{ item.product.product_code }})</span
+                  >
+                  × {{ item.quantity }} =
+                  {{ parseFloat(item.subtotal).toFixed(2) }} ₼
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Kiosks Tab -->
@@ -587,7 +679,9 @@
             <input
               v-model="activityFilters.startDate"
               type="date"
+              :max="activityStartMax"
               class="w-full px-3 py-2 border rounded-lg text-sm"
+              @change="clampActivityDates"
             />
           </div>
           <div>
@@ -595,7 +689,10 @@
             <input
               v-model="activityFilters.endDate"
               type="date"
+              :min="activityFilters.startDate || undefined"
+              :max="todayInput()"
               class="w-full px-3 py-2 border rounded-lg text-sm"
+              @change="clampActivityDates"
             />
           </div>
           <div>
@@ -665,6 +762,9 @@
           </div>
         </div>
 
+        <p v-if="activityDateError" class="text-red-600 text-sm mb-3">
+          {{ activityDateError }}
+        </p>
         <div class="flex gap-2 mb-4">
           <button
             @click="applyActivityFilters"
@@ -1128,22 +1228,80 @@ const statsFilters = ref({
   endDate: "",
   groupBy: "day",
 });
+const statsDateError = ref("");
+const activityDateError = ref("");
 
-function applyStatsFilters() {
+function todayInput() {
+  return toLocalDateInput(new Date());
+}
+
+const statsStartMax = computed(() => {
+  const today = todayInput();
+  const end = statsFilters.value.endDate;
+  return end && end < today ? end : today;
+});
+
+const activityStartMax = computed(() => {
+  const today = todayInput();
+  const end = activityFilters.value.endDate;
+  return end && end < today ? end : today;
+});
+
+function clampDatePair(filters, errorRef) {
+  const today = todayInput();
+  let message = "";
+  if (filters.startDate && filters.startDate > today) {
+    filters.startDate = today;
+    message = "Gələcək tarix seçilə bilməz.";
+  }
+  if (filters.endDate && filters.endDate > today) {
+    filters.endDate = today;
+    message = "Gələcək tarix seçilə bilməz.";
+  }
+  if (
+    filters.startDate &&
+    filters.endDate &&
+    filters.startDate > filters.endDate
+  ) {
+    errorRef.value = "Başlanğıc tarixi son tarixdən böyük ola bilməz.";
+    return false;
+  }
+  errorRef.value = message;
+  return true;
+}
+
+function clampStatsDates() {
+  return clampDatePair(statsFilters.value, statsDateError);
+}
+
+function clampActivityDates() {
+  return clampDatePair(activityFilters.value, activityDateError);
+}
+
+async function applyStatsFilters() {
+  if (!clampStatsDates()) return;
+
   const params = {};
   if (statsFilters.value.kioskId) params.kioskId = statsFilters.value.kioskId;
   if (statsFilters.value.startDate)
     params.startDate = statsFilters.value.startDate;
   if (statsFilters.value.endDate) params.endDate = statsFilters.value.endDate;
 
-  reportStore.fetchDashboardStats(params);
-
+  const jobs = [
+    reportStore.fetchDashboardStats(params),
+    reportStore.fetchSaleDetails(params),
+  ];
   if (statsFilters.value.startDate && statsFilters.value.endDate) {
-    reportStore.fetchSalesReport({
-      ...params,
-      groupBy: statsFilters.value.groupBy,
-    });
+    jobs.push(
+      reportStore.fetchSalesReport({
+        ...params,
+        groupBy: statsFilters.value.groupBy,
+      }),
+    );
+  } else {
+    reportStore.salesReport = [];
   }
+  await Promise.all(jobs);
 }
 
 const actionLabels = {
@@ -1180,6 +1338,7 @@ const uniqueProductNames = computed(() => {
 });
 
 function applyActivityFilters() {
+  if (!clampActivityDates()) return;
   activityStore.fetchLogs({ ...activityFilters.value });
 }
 
@@ -1461,7 +1620,7 @@ async function handleUpdateUser(userId) {
 
 onMounted(() => {
   kioskStore.fetchKiosks();
-  reportStore.fetchDashboardStats();
+  reportStore.fetchOverview();
   reportStore.fetchProductHistory();
   userStore.fetchUsers();
   loadAllProducts();
@@ -1473,10 +1632,6 @@ onMounted(() => {
   start.setDate(end.getDate() - 29);
   statsFilters.value.startDate = toLocalDateInput(start);
   statsFilters.value.endDate = toLocalDateInput(end);
-  reportStore.fetchSalesReport({
-    startDate: statsFilters.value.startDate,
-    endDate: statsFilters.value.endDate,
-    groupBy: statsFilters.value.groupBy,
-  });
+  applyStatsFilters();
 });
 </script>

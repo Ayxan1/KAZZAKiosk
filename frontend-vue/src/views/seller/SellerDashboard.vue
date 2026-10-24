@@ -55,7 +55,7 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Məhsul axtar..."
+            placeholder="Məhsul adı və ya kodu ilə axtar..."
             class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
             @blur="focusBarcodeInput"
           />
@@ -72,6 +72,9 @@
               <div class="flex justify-between">
                 <div>
                   <h3 class="font-medium">{{ product.product_name }}</h3>
+                  <p v-if="product.product_code" class="text-sm text-gray-500">
+                    Kod: {{ product.product_code }}
+                  </p>
                   <p class="text-sm text-gray-600">
                     Stok: {{ product.stock_quantity }}
                   </p>
@@ -334,10 +337,13 @@ const barcodeMessage = ref("");
 const barcodeMessageOk = ref(false);
 
 const filteredProducts = computed(() => {
-  if (!searchQuery.value) return productStore.products;
-  return productStore.products.filter((p) =>
-    p.product_name.toLowerCase().includes(searchQuery.value.toLowerCase()),
-  );
+  const query = searchQuery.value.trim().toLowerCase();
+  if (!query) return productStore.products;
+  return productStore.products.filter((p) => {
+    const name = (p.product_name || "").toLowerCase();
+    const code = (p.product_code || "").toLowerCase();
+    return name.includes(query) || code.includes(query);
+  });
 });
 
 function isOtherEditableFocused() {

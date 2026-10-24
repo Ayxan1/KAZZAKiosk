@@ -7,11 +7,23 @@ import {
 import apiClient from '../api/client'
 
 export const useReportStore = defineStore('report', () => {
+    const overview = ref(null)
     const stats = ref(null)
     const productHistory = ref([])
     const salesReport = ref([])
+    const saleDetails = ref([])
+    const sellerStats = ref([])
     const loading = ref(false)
     const error = ref(null)
+
+    async function fetchOverview() {
+        try {
+            const data = await apiClient.get('/reports/dashboard')
+            overview.value = data.stats
+        } catch (err) {
+            console.error('Ümumi statistika yüklənə bilmədi:', err)
+        }
+    }
 
     async function fetchDashboardStats(params = {}) {
         loading.value = true
@@ -45,6 +57,22 @@ export const useReportStore = defineStore('report', () => {
         }
     }
 
+    async function fetchSaleDetails(params = {}) {
+        error.value = null
+        try {
+            const data = await apiClient.get('/reports/sales-details', {
+                params
+            })
+            saleDetails.value = data.sales || []
+            sellerStats.value = data.sellers || []
+        } catch (err) {
+            saleDetails.value = []
+            sellerStats.value = []
+            error.value = err.message || 'Satış detalları yüklənə bilmədi'
+            console.error('Satış detalları yüklənə bilmədi:', err)
+        }
+    }
+
     async function fetchSalesReport(params = {}) {
         loading.value = true
         error.value = null
@@ -62,13 +90,18 @@ export const useReportStore = defineStore('report', () => {
     }
 
     return {
+        overview,
         stats,
         productHistory,
         salesReport,
+        saleDetails,
+        sellerStats,
         loading,
         error,
+        fetchOverview,
         fetchDashboardStats,
         fetchProductHistory,
-        fetchSalesReport
+        fetchSalesReport,
+        fetchSaleDetails
     }
 })

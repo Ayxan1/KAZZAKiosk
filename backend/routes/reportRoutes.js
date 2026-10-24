@@ -15,6 +15,9 @@ router.get('/dashboard', reportController.getDashboardStats);
 // Get sales report
 router.get('/sales', reportController.getSalesReport);
 
+// Sale lines for the selected range (admin statistics)
+router.get('/sales-details', isAdmin, reportController.getSalesDetails);
+
 // Get low stock products
 router.get('/low-stock', reportController.getLowStockProducts);
 
