@@ -586,6 +586,7 @@
                 <th class="py-2 pr-4">Kiosk</th>
                 <th class="py-2 pr-4">Məhsul</th>
                 <th class="py-2 pr-4">Kod</th>
+                <th class="py-2 pr-4">Barkod</th>
                 <th class="py-2 pr-4">Qiymət</th>
                 <th class="py-2 pr-4">Say</th>
                 <th class="py-2 pr-4"></th>
@@ -600,6 +601,7 @@
                 <td class="py-2 pr-4">{{ p.kiosk_name }}</td>
                 <td class="py-2 pr-4">{{ p.product_name }}</td>
                 <td class="py-2 pr-4">{{ p.product_code || "-" }}</td>
+                <td class="py-2 pr-4">{{ p.barcode || "-" }}</td>
                 <td class="py-2 pr-4">{{ p.price.toFixed(2) }} ₼</td>
                 <td class="py-2 pr-4">{{ p.stock_quantity }}</td>
                 <td class="py-2 pr-4">
