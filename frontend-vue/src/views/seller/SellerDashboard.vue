@@ -65,6 +65,13 @@
           >
             {{ barcodeMessage }}
           </p>
+          <p
+            v-if="activeStockNotice"
+            class="text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 mb-2"
+          >
+            {{ activeStockNotice.name }} — anbarda
+            {{ activeStockNotice.remaining }} ədəd qaldı
+          </p>
           <input
             v-model="searchQuery"
             type="text"
@@ -89,7 +96,10 @@
                     Kod: {{ product.product_code }}
                   </p>
                   <p class="text-sm text-gray-600">
-                    Stok: {{ product.stock_quantity }}
+                    Anbarda:
+                    {{
+                      remainingFor(product.product_id, product.stock_quantity)
+                    }}
                   </p>
                 </div>
                 <span class="shrink-0 text-lg font-semibold text-indigo-600"
@@ -156,14 +166,33 @@
             </p>
           </div>
 
+          <div
+            v-if="activeStockNotice"
+            class="mb-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm"
+          >
+            <p class="font-medium text-gray-800">{{ activeStockNotice.name }}</p>
+            <p class="font-semibold text-indigo-700">
+              Anbarda {{ activeStockNotice.remaining }} ədəd qaldı
+            </p>
+          </div>
+
           <div class="space-y-3 mb-4 max-h-[26rem] overflow-y-auto pr-1">
             <div
               v-for="item in salesStore.cart"
               :key="item.product_id"
               class="flex justify-between items-center gap-2 p-2 rounded-lg bg-gray-50"
+              :class="
+                activeStockNotice?.product_id === item.product_id
+                  ? 'ring-2 ring-indigo-300'
+                  : ''
+              "
             >
               <div class="flex-1">
                 <p class="font-medium text-sm">{{ item.product_name }}</p>
+                <p class="text-xs text-gray-500 mt-0.5">
+                  Anbarda qalan:
+                  {{ remainingFor(item.product_id, item.stock_quantity) }}
+                </p>
                 <div class="flex items-center gap-3 mt-2">
                   <button
                     @click="
@@ -256,6 +285,13 @@
           class="text-green-600 text-sm font-medium mb-2"
         >
           {{ saleSuccessMessage }}
+        </p>
+        <p
+          v-if="activeStockNotice"
+          class="text-sm font-medium text-indigo-700 mb-2"
+        >
+          {{ activeStockNotice.name }}: anbarda
+          {{ activeStockNotice.remaining }} ədəd qaldı
         </p>
         <div class="flex items-center gap-3">
           <button
@@ -401,6 +437,47 @@ const barcodeInput = ref("");
 const barcodeInputEl = ref(null);
 const barcodeMessage = ref("");
 const barcodeMessageOk = ref(false);
+const stockNotice = ref(null);
+
+function cartQuantity(productId) {
+  return (
+    salesStore.cart.find((item) => item.product_id === productId)?.quantity || 0
+  );
+}
+
+function remainingFor(productId, stockQuantity) {
+  return Math.max(0, (stockQuantity ?? 0) - cartQuantity(productId));
+}
+
+function showStockNotice(product) {
+  const item = salesStore.cart.find(
+    (entry) => entry.product_id === product.product_id,
+  );
+  if (!item) {
+    stockNotice.value = null;
+    return 0;
+  }
+  const remaining = remainingFor(item.product_id, item.stock_quantity);
+  stockNotice.value = {
+    product_id: item.product_id,
+    name: item.product_name,
+    remaining,
+  };
+  return remaining;
+}
+
+const activeStockNotice = computed(() => {
+  if (!stockNotice.value) return null;
+  const item = salesStore.cart.find(
+    (entry) => entry.product_id === stockNotice.value.product_id,
+  );
+  if (!item) return null;
+  return {
+    product_id: item.product_id,
+    name: item.product_name,
+    remaining: remainingFor(item.product_id, item.stock_quantity),
+  };
+});
 
 const filteredProducts = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
@@ -451,8 +528,9 @@ function handleBarcodeScan() {
   if (match) {
     const added = salesStore.addToCart(match);
     if (added) {
+      const remaining = showStockNotice(match);
       barcodeMessageOk.value = true;
-      barcodeMessage.value = `${match.product_name} səbətə əlavə olundu.`;
+      barcodeMessage.value = `${match.product_name} səbətə əlavə olundu. Anbarda ${remaining} ədəd qaldı.`;
     } else {
       barcodeMessageOk.value = false;
       barcodeMessage.value =
@@ -468,12 +546,15 @@ function handleBarcodeScan() {
 }
 
 function addProductToCart(product) {
-  salesStore.addToCart(product);
+  const added = salesStore.addToCart(product);
+  if (added) showStockNotice(product);
   focusBarcodeInput({ force: true });
 }
 
 function changeCartQuantity(productId, quantity) {
   salesStore.updateQuantity(productId, quantity);
+  const item = salesStore.cart.find((entry) => entry.product_id === productId);
+  if (item) showStockNotice(item);
   focusBarcodeInput({ force: true });
 }
 
@@ -507,12 +588,14 @@ function closeShiftModal() {
 
 function handleRemoveFromCart(productId) {
   salesStore.removeFromCart(productId);
+  if (stockNotice.value?.product_id === productId) stockNotice.value = null;
   barcodeMessage.value = "";
   focusBarcodeInput({ force: true });
 }
 
 function handleClearCart() {
   salesStore.clearCart();
+  stockNotice.value = null;
   barcodeMessage.value = "";
   focusBarcodeInput({ force: true });
 }
@@ -539,6 +622,8 @@ async function completeSale() {
   const success = await salesStore.completeSale(kioskId, paymentMethod.value);
   if (success) {
     saleSuccessMessage.value = "Satış uğurla tamamlandı!";
+    stockNotice.value = null;
+    barcodeMessage.value = "";
     mobileCartOpen.value = false;
     productStore.fetchProducts(kioskId);
     setTimeout(() => {
