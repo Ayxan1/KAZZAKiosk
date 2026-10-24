@@ -65,13 +65,6 @@
           >
             {{ barcodeMessage }}
           </p>
-          <p
-            v-if="activeStockNotice"
-            class="text-sm font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 mb-2"
-          >
-            {{ activeStockNotice.name }} — anbarda
-            {{ activeStockNotice.remaining }} ədəd qaldı
-          </p>
           <input
             v-model="searchQuery"
             type="text"
@@ -163,16 +156,6 @@
             </button>
             <p v-if="shiftStore.error" class="text-red-600 text-sm mt-2 font-medium">
               {{ shiftStore.error }}
-            </p>
-          </div>
-
-          <div
-            v-if="activeStockNotice"
-            class="mb-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm"
-          >
-            <p class="font-medium text-gray-800">{{ activeStockNotice.name }}</p>
-            <p class="font-semibold text-indigo-700">
-              Anbarda {{ activeStockNotice.remaining }} ədəd qaldı
             </p>
           </div>
 
@@ -285,13 +268,6 @@
           class="text-green-600 text-sm font-medium mb-2"
         >
           {{ saleSuccessMessage }}
-        </p>
-        <p
-          v-if="activeStockNotice"
-          class="text-sm font-medium text-indigo-700 mb-2"
-        >
-          {{ activeStockNotice.name }}: anbarda
-          {{ activeStockNotice.remaining }} ədəd qaldı
         </p>
         <div class="flex items-center gap-3">
           <button
@@ -528,9 +504,9 @@ function handleBarcodeScan() {
   if (match) {
     const added = salesStore.addToCart(match);
     if (added) {
-      const remaining = showStockNotice(match);
+      showStockNotice(match);
       barcodeMessageOk.value = true;
-      barcodeMessage.value = `${match.product_name} səbətə əlavə olundu. Anbarda ${remaining} ədəd qaldı.`;
+      barcodeMessage.value = `${match.product_name} səbətə əlavə olundu.`;
     } else {
       barcodeMessageOk.value = false;
       barcodeMessage.value =
