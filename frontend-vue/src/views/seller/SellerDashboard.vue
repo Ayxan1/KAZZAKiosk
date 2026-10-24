@@ -1,26 +1,26 @@
 <template>
   <div class="min-h-screen bg-gray-100">
     <!-- Header -->
-    <header class="bg-white shadow-sm">
+    <header class="sticky top-0 z-20 bg-white shadow-sm">
       <div
-        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center"
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-3"
       >
-        <div>
-          <h1 class="text-2xl font-bold text-gray-800">KAZZAKIOSK</h1>
-          <p class="text-sm text-gray-600">
-            Seller Panel - {{ authStore.user?.full_name }}
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-800">KAZZAKIOSK</h1>
+          <p class="text-xs sm:text-sm text-gray-600 truncate">
+            {{ authStore.user?.full_name }}
           </p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex shrink-0 gap-2">
           <button
             @click="openShiftModal"
-            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
+            class="px-3 sm:px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition text-sm"
           >
             Gündəlik
           </button>
           <button
             @click="authStore.logout"
-            class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition"
+            class="px-3 sm:px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition text-sm"
           >
             Çıxış
           </button>
@@ -29,19 +29,32 @@
     </header>
 
     <!-- Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 lg:pb-6">
       <!-- Sales -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Products List -->
-        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <div
+            v-if="!shiftStore.isOpen"
+            class="lg:hidden bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-lg p-3 mb-4 text-sm"
+          >
+            <p class="font-medium mb-2">Növbəni təhvil almamısınız.</p>
+            <button
+              type="button"
+              @click="handleTakeOver"
+              class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm"
+            >
+              Təhvil Al
+            </button>
+          </div>
           <input
             ref="barcodeInputEl"
             v-model="barcodeInput"
             autofocus
             @keyup.enter="handleBarcodeScan"
             type="text"
-            placeholder="Barkodu skan edin (avtomatik səbətə əlavə olunur)..."
-            class="w-full px-4 py-2 border-2 border-indigo-400 rounded-lg mb-2 focus:ring-2 focus:ring-indigo-500"
+            placeholder="Barkod skan edin..."
+            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg mb-2 focus:ring-2 focus:ring-indigo-500"
           />
           <p
             v-if="barcodeMessage"
@@ -69,9 +82,9 @@
               @click="addProductToCart(product)"
               class="p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 cursor-pointer transition"
             >
-              <div class="flex justify-between">
-                <div>
-                  <h3 class="font-medium">{{ product.product_name }}</h3>
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <h3 class="font-medium break-words">{{ product.product_name }}</h3>
                   <p v-if="product.product_code" class="text-sm text-gray-500">
                     Kod: {{ product.product_code }}
                   </p>
@@ -79,7 +92,7 @@
                     Stok: {{ product.stock_quantity }}
                   </p>
                 </div>
-                <span class="text-lg font-semibold text-indigo-600"
+                <span class="shrink-0 text-lg font-semibold text-indigo-600"
                   >{{ product.price }} ₼</span
                 >
               </div>
@@ -93,8 +106,26 @@
           </div>
         </div>
 
+        <button
+          v-if="mobileCartOpen"
+          type="button"
+          class="lg:hidden fixed inset-0 z-30 bg-black/40"
+          @click="mobileCartOpen = false"
+        ></button>
+
         <!-- Cart -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <div
+          class="bg-white shadow-sm p-4 sm:p-6 lg:rounded-xl lg:static max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:max-h-[85vh] max-lg:overflow-y-auto max-lg:rounded-t-2xl max-lg:shadow-2xl max-lg:transition-transform max-lg:pb-[max(1rem,env(safe-area-inset-bottom))]"
+          :class="mobileCartOpen ? 'max-lg:translate-y-0' : 'max-lg:translate-y-full'"
+        >
+          <div class="lg:hidden flex justify-center mb-2">
+            <button
+              type="button"
+              class="h-1.5 w-12 rounded-full bg-gray-300"
+              @click="mobileCartOpen = false"
+              aria-label="Səbəti bağla"
+            ></button>
+          </div>
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold">Səbət</h2>
             <button
@@ -214,14 +245,48 @@
           </div>
         </div>
       </div>
+
+      <div
+        v-show="!mobileCartOpen"
+        class="lg:hidden fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white px-4 py-3 shadow-lg"
+        style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom))"
+      >
+        <p
+          v-if="saleSuccessMessage && !mobileCartOpen"
+          class="text-green-600 text-sm font-medium mb-2"
+        >
+          {{ saleSuccessMessage }}
+        </p>
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            class="min-w-0 flex-1 text-left"
+            @click="mobileCartOpen = true"
+          >
+            <span class="block text-sm text-gray-600">
+              Səbət · {{ salesStore.cartCount }} ədəd
+            </span>
+            <span class="block text-lg font-bold text-indigo-600">
+              {{ salesStore.cartTotal.toFixed(2) }} ₼
+            </span>
+          </button>
+          <button
+            type="button"
+            class="shrink-0 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white"
+            @click="mobileCartOpen = true"
+          >
+            Səbət
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Shift (Gündəlik) Modal -->
     <div
       v-if="showShiftModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-end sm:items-center justify-center p-3 sm:p-4"
     >
-      <div class="bg-white rounded-xl p-6 max-w-md w-full">
+      <div class="bg-white rounded-t-2xl sm:rounded-xl p-4 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
         <h3 class="text-xl font-semibold mb-4">Gündəlik</h3>
 
         <div v-if="shiftStore.loading" class="text-gray-600 text-sm mb-4">
@@ -325,6 +390,7 @@ const salesStore = useSalesStore();
 const shiftStore = useShiftStore();
 
 const showShiftModal = ref(false);
+const mobileCartOpen = ref(false);
 
 const searchQuery = ref("");
 const paymentMethod = ref("CASH");
@@ -473,6 +539,7 @@ async function completeSale() {
   const success = await salesStore.completeSale(kioskId, paymentMethod.value);
   if (success) {
     saleSuccessMessage.value = "Satış uğurla tamamlandı!";
+    mobileCartOpen.value = false;
     productStore.fetchProducts(kioskId);
     setTimeout(() => {
       saleSuccessMessage.value = "";

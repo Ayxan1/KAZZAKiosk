@@ -2,9 +2,9 @@
   <div
     class="min-h-screen bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center p-4"
   >
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8">
       <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-gray-800">KAZZAKIOSK</h1>
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">KAZZAKIOSK</h1>
         <p class="text-gray-600 mt-2">Kiosk İdarəetmə Sistemi</p>
       </div>
 

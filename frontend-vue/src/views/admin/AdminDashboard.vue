@@ -1,42 +1,43 @@
 <template>
   <div class="min-h-screen bg-gray-100">
     <!-- Header -->
-    <header class="bg-white shadow-sm">
+    <header class="sticky top-0 z-20 bg-white shadow-sm">
       <div
-        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center"
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center gap-3"
       >
-        <div>
-          <h1 class="text-2xl font-bold text-gray-800">KAZZAKIOSK</h1>
-          <p class="text-sm text-gray-600">Admin Panel</p>
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-800">KAZZAKIOSK</h1>
+          <p class="text-xs sm:text-sm text-gray-600 truncate">
+            Admin · {{ authStore.user?.full_name }}
+          </p>
         </div>
-        <div class="flex items-center gap-4">
-          <span class="text-gray-700">{{ authStore.user?.full_name }}</span>
-          <button
-            @click="authStore.logout"
-            class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition"
-          >
-            Çıxış
-          </button>
-        </div>
+        <button
+          @click="authStore.logout"
+          class="shrink-0 px-3 sm:px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition text-sm sm:text-base"
+        >
+          Çıxış
+        </button>
       </div>
     </header>
 
     <!-- Tabs -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div class="flex gap-2 mb-6 border-b border-gray-200">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          @click="setActiveTab(tab.id)"
-          :class="[
-            'px-6 py-3 font-medium transition',
-            activeTab === tab.id
-              ? 'text-indigo-600 border-b-2 border-indigo-600'
-              : 'text-gray-600 hover:text-gray-800',
-          ]"
-        >
-          {{ tab.label }}
-        </button>
+      <div class="-mx-4 mb-6 overflow-x-auto border-b border-gray-200 px-4 sm:mx-0 sm:px-0">
+        <div class="flex min-w-max gap-1">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            @click="setActiveTab(tab.id)"
+            :class="[
+              'whitespace-nowrap px-3 sm:px-5 py-3 text-sm sm:text-base font-medium transition',
+              activeTab === tab.id
+                ? 'text-indigo-600 border-b-2 border-indigo-600'
+                : 'text-gray-600 hover:text-gray-800',
+            ]"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
       </div>
 
       <!-- Dashboard Tab -->
@@ -73,7 +74,7 @@
       <!-- Statistics Tab -->
       <div
         v-else-if="activeTab === 'statistics'"
-        class="bg-white rounded-xl shadow-sm p-6"
+        class="bg-white rounded-xl shadow-sm p-4 sm:p-6"
       >
         <h2 class="text-xl font-semibold mb-4">Statistika</h2>
 
@@ -325,9 +326,9 @@
       <!-- Kiosks Tab -->
       <div
         v-else-if="activeTab === 'kiosks'"
-        class="bg-white rounded-xl shadow-sm p-6"
+        class="bg-white rounded-xl shadow-sm p-4 sm:p-6"
       >
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
           <h2 class="text-xl font-semibold">Kiosklar</h2>
           <button
             @click="toggleNewKioskForm"
@@ -340,7 +341,7 @@
         <form
           v-if="showNewKioskForm"
           @submit.prevent="handleCreateKiosk"
-          class="flex gap-2 mb-6 p-4 bg-gray-50 rounded-lg"
+          class="flex flex-col sm:flex-row gap-2 mb-6 p-4 bg-gray-50 rounded-lg"
         >
           <input
             v-model="newKioskName"
@@ -368,11 +369,11 @@
           >
             <div
               v-if="editingKioskId !== kiosk.kiosk_id"
-              class="flex justify-between items-center"
+              class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div>
+              <div class="min-w-0">
                 <h3 class="font-medium">{{ kiosk.kiosk_name }}</h3>
-                <p class="text-sm text-gray-600">{{ kiosk.kiosk_id }}</p>
+                <p class="text-xs text-gray-500 break-all">{{ kiosk.kiosk_id }}</p>
                 <p class="text-sm mt-1">
                   <span
                     v-if="activeShiftsByKiosk[kiosk.kiosk_id]?.length"
@@ -390,7 +391,7 @@
                   >
                 </p>
               </div>
-              <div class="flex items-center gap-3">
+              <div class="flex flex-wrap items-center gap-2">
                 <span
                   :class="[
                     'px-3 py-1 rounded-full text-sm',
@@ -452,9 +453,9 @@
       <!-- Products Tab (cross-kiosk inventory) -->
       <div
         v-else-if="activeTab === 'products'"
-        class="bg-white rounded-xl shadow-sm p-6"
+        class="bg-white rounded-xl shadow-sm p-4 sm:p-6"
       >
-        <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
+        <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
           <h2 class="text-xl font-semibold">Bütün Kiosklarda Məhsullar</h2>
           <button
             @click="toggleNewProductForm"
@@ -624,7 +625,7 @@
       <!-- Product History Tab -->
       <div
         v-else-if="activeTab === 'history'"
-        class="bg-white rounded-xl shadow-sm p-6"
+        class="bg-white rounded-xl shadow-sm p-4 sm:p-6"
       >
         <h2 class="text-xl font-semibold mb-4">Məhsul Dəyişiklik Tarixçəsi</h2>
         <div v-if="reportStore.loading" class="text-gray-600">Yüklənir...</div>
@@ -669,7 +670,7 @@
       <!-- Activity Log Tab -->
       <div
         v-else-if="activeTab === 'activity'"
-        class="bg-white rounded-xl shadow-sm p-6"
+        class="bg-white rounded-xl shadow-sm p-4 sm:p-6"
       >
         <h2 class="text-xl font-semibold mb-4">Fəaliyyət Jurnalı</h2>
 
@@ -834,9 +835,9 @@
       <!-- Users Tab -->
       <div
         v-else-if="activeTab === 'users'"
-        class="bg-white rounded-xl shadow-sm p-6"
+        class="bg-white rounded-xl shadow-sm p-4 sm:p-6"
       >
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
           <h2 class="text-xl font-semibold">İstifadəçilər</h2>
           <button
             @click="toggleNewUserForm"
@@ -914,7 +915,7 @@
           >
             <div
               v-if="editingUserId !== user.user_id"
-              class="flex justify-between items-center"
+              class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <h3 class="font-medium">
@@ -927,7 +928,7 @@
                   >
                 </p>
               </div>
-              <div class="flex items-center gap-3">
+              <div class="flex flex-wrap items-center gap-2">
                 <span
                   :class="[
                     'px-3 py-1 rounded-full text-sm',
@@ -1006,12 +1007,12 @@
     <!-- Shift History Modal -->
     <div
       v-if="showShiftHistoryModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-end sm:items-center justify-center p-3 sm:p-4"
     >
       <div
-        class="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[85vh] flex flex-col"
+        class="bg-white rounded-t-2xl sm:rounded-xl p-4 sm:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col"
       >
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
           <h3 class="text-xl font-semibold">
             Növbə tarixçəsi · {{ shiftHistoryKioskName }}
           </h3>
@@ -1083,12 +1084,12 @@
     <!-- Shift Sales Drilldown Modal -->
     <div
       v-if="shiftStore.selectedShiftSales || shiftStore.selectedShiftLoading"
-      class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-end sm:items-center justify-center p-3 sm:p-4"
     >
       <div
-        class="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[85vh] flex flex-col"
+        class="bg-white rounded-t-2xl sm:rounded-xl p-4 sm:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col"
       >
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
           <h3 class="text-xl font-semibold">Növbənin satışları</h3>
           <button
             @click="shiftStore.clearSelectedShiftSales()"
